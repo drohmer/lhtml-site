@@ -60,6 +60,30 @@
       }, {rootMargin: '-70px 0px -70% 0px'});
       headings.forEach(h => io.observe(h));
     }
+    // the same list on narrow screens, where the right column is hidden: a collapsible bar at
+    // the top of the content, sticky under the top bar; it names the section being read, and
+    // a link closes it (docs.css, .mobile-toc)
+    const main = $('main#content');
+    if (main) {
+      const box = document.createElement('details');
+      box.className = 'mobile-toc';
+      box.setAttribute('data-pagefind-ignore', '');
+      const summary = document.createElement('summary');
+      summary.innerHTML = '<span class="mobile-toc-label">On this page</span><span class="mobile-toc-current"></span>';
+      const list = document.createElement('nav');
+      list.setAttribute('aria-label', 'On this page');
+      links.forEach(l => {
+        const a = l.cloneNode(true);
+        a.addEventListener('click', () => { box.open = false; });
+        list.appendChild(a);
+      });
+      box.append(summary, list);
+      main.insertBefore(box, main.firstChild);
+      document.body.classList.add('has-mobile-toc');
+      const current = $('.mobile-toc-current', box);
+      const update = () => { const act = links.find(l => l.classList.contains('active')); current.textContent = act ? act.textContent : ''; };
+      new MutationObserver(update).observe(pageToc, {subtree: true, attributes: true, attributeFilter: ['class']});
+    }
   }
   // anchor link on the headings of the content
   $$('main article h2[id], main article h3[id]').forEach(h => {

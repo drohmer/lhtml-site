@@ -202,3 +202,27 @@ def test_a_collapsed_section_stays_collapsed_after_a_reload(served):
     page.reload()
     assert not page.eval_on_selector(guides, 'd => d.open')
     assert page.evaluate("() => JSON.parse(localStorage.getItem('docs-menu-open'))")['Guides'] is False
+
+
+@browser_test
+def test_on_this_page_on_a_phone(served):
+    """Below 1180 px the right column is hidden: "On this page" is a bar at the top of the
+    content, its links those of the column; a link closes it and leaves its heading in view."""
+    serve, page = served
+    base, toc = serve({})
+    page.set_viewport_size({'width': 390, 'height': 700})
+    page.goto(base + '01_start/02_first-page/index.html')
+    bar = '.mobile-toc'
+    assert page.is_visible(bar + ' summary')
+    column = page.eval_on_selector_all('#title_id a', 'els => els.map(a => a.getAttribute("href"))')
+    links = page.eval_on_selector_all(bar + ' nav a', 'els => els.map(a => a.getAttribute("href"))')
+    assert links == column and len(links) >= 2
+    page.click(bar + ' summary')
+    page.click(f'{bar} nav a[href="{links[-1]}"]')
+    assert not page.eval_on_selector(bar, 'd => d.open')
+    page.wait_for_timeout(300)
+    heading_top = page.evaluate('id => document.getElementById(id).getBoundingClientRect().top', links[-1][1:])
+    assert heading_top >= page.eval_on_selector(bar, 'd => d.getBoundingClientRect().bottom')
+    # on a wide screen, the column only
+    page.set_viewport_size({'width': 1400, 'height': 900})
+    assert not page.is_visible(bar)

@@ -40,6 +40,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the feature.
 - The configuration key `katex`: `render: build` (default) or `browser`, and
   `macros`, used at build and in the browser.
+- The `docs` theme on phones and tablets: "On this page" is a bar at the top
+  of the content where the right column is hidden (below 1180 px), sticky
+  under the top bar; it names the section being read, and a link closes it.
+  The entries of the drawer menu are about 40 px high (below 860 px).
 
 ### Changed
 - The themes load KaTeX only on the pages that write formulas (`\(`, `\[`,

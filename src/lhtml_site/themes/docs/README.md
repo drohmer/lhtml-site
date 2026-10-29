@@ -2,7 +2,9 @@
 
 A documentation site: a top bar with the search box, a side menu by section and group, an
 "On this page" column, a breadcrumb, previous / next links, light and dark modes, a drawer
-menu on phones (below 860 px) and figures that open full size.
+menu on phones (below 860 px, its entries large enough for a finger), "On this page" as a
+bar at the top of the content where the column is hidden (below 1180 px), and figures that
+open full size.
 
 ```sh
 lhtml-site init my-docs --theme docs    # a project with a few pages to start from

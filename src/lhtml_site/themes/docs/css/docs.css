@@ -363,6 +363,37 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
 /* on this page: category groups under their section */
 #title_id a.toc-sub { padding-left: 24px; font-size: 13px; }
 
+/* "On this page" on narrow screens (site.js): a bar at the top of the content, sticky under
+   the top bar, shown where the right column is hidden */
+.mobile-toc { display: none; }
+@media (max-width: 1180px) {
+  .mobile-toc {
+    display: block; position: sticky; top: var(--topbar-h); z-index: 20;
+    margin: 0 0 18px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .mobile-toc summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; font-size: 14px;
+  }
+  .mobile-toc summary::-webkit-details-marker { display: none; }
+  .mobile-toc summary::after {
+    content: ""; flex: none; margin-left: auto; width: 7px; height: 7px; opacity: .6;
+    border-right: 1.8px solid currentColor; border-bottom: 1.8px solid currentColor; transform: rotate(-45deg);
+  }
+  .mobile-toc[open] summary::after { transform: rotate(45deg); }
+  .mobile-toc-label { font-weight: 600; flex: none; color: var(--text); }
+  .mobile-toc-current { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mobile-toc nav {
+    display: flex; flex-direction: column; max-height: 60vh; overflow-y: auto;
+    padding: 4px 8px 10px; border-top: 1px solid var(--border);
+  }
+  .mobile-toc nav a { padding: 8px; font-size: 15px; color: var(--text-soft); border-radius: 6px; }
+  .mobile-toc nav a.toc-sub { padding-left: 22px; font-size: 14px; }
+  .mobile-toc nav a:hover { background: var(--bg-soft); text-decoration: none; }
+  /* a link to a heading leaves it below the top bar and the bar */
+  html:has(body.has-mobile-toc) { scroll-padding-top: calc(var(--topbar-h) + 64px); }
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 1180px) {
   .layout { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
@@ -389,6 +420,14 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
   .doc h2 { font-size: 1.3rem; }
   .doc div.code pre { font-size: 13px; padding: 12px 14px; }
   .search-results { position: fixed; top: calc(var(--topbar-h) + 4px); left: 8px; right: 8px; min-width: 0; }
+  /* the "On this page" bar spans the screen, right under the top bar */
+  .mobile-toc { margin: -24px -16px 18px; border-radius: 0; border-width: 0 0 1px; }
+  /* drawer menu: entries large enough for a finger (about 40 px high) */
+  .nav-link { padding: 9px 12px; font-size: 15.5px; }
+  .nav-section { margin-top: 10px; }
+  .nav-section-title { padding: 10px 12px; font-size: 17px; }
+  .nav-subgroup-title { padding: 9px 12px; font-size: 15.5px; }
+  .nav-group summary { padding: 9px 12px; font-size: 15.5px; }
 }
 @media (max-width: 480px) {
   .topbar-actions .icon-btn[href] { display: none; }
