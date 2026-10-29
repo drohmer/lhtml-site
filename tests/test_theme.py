@@ -51,7 +51,8 @@ def test_a_manifest_the_build_cannot_read_is_refused(tmp_path):
     for manifest, message in (({'templates': 'x'}, 'unknown theme setting'),
                               ({'template': ''}, 'must be a non-empty string'),
                               ({'layout': {'threshold': 2}}, 'a theme does not set threshold'),
-                              ({'layout': 'body'}, 'layout must be a mapping')):
+                              ({'layout': 'body'}, 'layout must be a mapping'),
+                              ({'not_found': 3}, 'not_found must name the template')):
         directory = write(tmp_path / 'bad', **manifest)
         with pytest.raises(ConfigError) as error:
             theme.read(directory)

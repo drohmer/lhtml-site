@@ -75,6 +75,29 @@ keywords:
           plain_groups: [Other]      # groups whose links do not get that class
 ```
 
+## The 404 page
+
+With `base_url` in `configure.yaml` (where the site is served: `/`, `/my-project/` for a GitHub
+project page, or a whole URL such as `https://example.org/docs/`), the build writes `404.html`
+at the root of the site:
+
+```yaml
+base_url: /cgp-doc/
+```
+
+- A server shows it at the URL that was asked for, at any depth (`/cgp-doc/a/b/c/`): its links
+  start from `base_url` (`/cgp-doc/theme/css/docs.css`) instead of being relative. The other
+  pages keep their relative links. Without `base_url`, no `404.html` is written.
+- It holds a message, a search box, the sections of the menu and, when one is close enough,
+  the page of the menu that looks like the URL asked for ("Did you mean ...?", `js/not_found.js`).
+- A page `404.md.j2` (or `404.html.j2`) at the top of the sources replaces that content; it is
+  rendered the same way, so write its links with `{{ pathToRoot }}`.
+- It is not in the menu, the order of the pages, previous / next or the search index
+  (`data-pagefind-ignore`), and has `<meta name="robots" content="noindex">`. A template sees
+  it as `page.not_found`.
+- GitHub Pages and Netlify serve `404.html` by themselves; for nginx:
+  `error_page 404 /cgp-doc/404.html;`, for Apache: `ErrorDocument 404 /cgp-doc/404.html`.
+
 ## An overlay
 
 A project restyles or extends the theme without copying it: copy the bundled theme into a
@@ -109,5 +132,5 @@ The search works when the site is served over http, not from a file opened on th
 ## Files
 
 `template/base.html`, `css/docs.css`, `js/menu.js` (menu and previous / next), `js/site.js`
-(everything else), `css/font.css` with `fonts/source_code_pro` (the monospace font; the text
+(everything else), `template/404.html` and `js/not_found.js` (the 404 page), `css/font.css` with `fonts/source_code_pro` (the monospace font; the text
 uses the system font) and `libs/katex`.

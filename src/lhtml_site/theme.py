@@ -23,6 +23,8 @@ The manifest:
       height: 1080
     export: pdf                            # the site is rendered to a PDF
                                            # (lhtml_site/pdf_export.py), not published
+    not_found: 'theme/template/404.html'   # the content of 404.html, the page shown
+                                           # for any missing URL (lhtml_site/not_found.py)
 
 A theme with no `toc:` has no menu, and the build writes none. That is how
 a theme says so - not a switch in a project's configuration, which has no
@@ -44,7 +46,7 @@ from lhtml_site.filesystem import read_yaml
 
 MANIFEST = 'theme.yaml'
 DEFAULTS = {'template': 'theme/template/base.html', 'content_block': 'content',
-            'toc': None, 'layout': {}, 'export': None}
+            'toc': None, 'layout': {}, 'export': None, 'not_found': None}
 EXPORTS = ('pdf',)
 TOC_KEYS = ('file', 'keys')
 # The layout keys a theme may declare: the ones that describe the theme, not
@@ -84,6 +86,10 @@ def validate(given, file):
     for key in ('template', 'content_block'):
         if key in given and (not isinstance(given[key], str) or not given[key].strip()):
             raise ConfigError(f'{file}: {key} must be a non-empty string')
+    not_found = given.get('not_found')
+    if not_found is not None and (not isinstance(not_found, str) or not not_found.strip()):
+        raise ConfigError(f'{file}: not_found must name the template of the content of 404.html, '
+                          f'in the site (theme/template/404.html), or be absent')
     toc = given.get('toc')
     if toc is not None:
         if not isinstance(toc, dict) or set(toc) - set(TOC_KEYS):

@@ -7,6 +7,7 @@ content_block: 'content'
 toc:
   file: 'js/menu.js'        # receives the table of contents ({{TOC}})
   keys: [section, group]    # the menu groups the pages by these page settings
+not_found: 'theme/template/404.html'   # the content of 404.html (with base_url: in configure.yaml)
 layout:
   root: '#content article'  # the article, without the menu, the pager and the footer
   exclude: 'nav, footer'

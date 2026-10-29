@@ -35,6 +35,7 @@ from lhtml_site import menu
 from lhtml_site import headings
 from lhtml_site import wrap
 from lhtml_site import index_page
+from lhtml_site import not_found
 from lhtml_site import video_cache
 from lhtml_site.layout import build as layout_build
 from lhtml_site.extensions import Extensions, ExtensionError
@@ -189,6 +190,8 @@ def select_pages(meta, log, scaffold=False):
     # page it names is published - that is its author asking for it.
     found = pages.discover(pages.Source(None, meta['source_directory']), exclude=site,
                            include_hidden=loaded_deck is not None)
+    if not_found.enabled(meta):         # the 404 page of the project is no page of the site
+        found = [page for page in found if not not_found.is_page(page)]
     if loaded_deck is None:
         pages.name_outputs(found)
         return found
@@ -912,6 +915,7 @@ def generate_site(meta, selected, built):
             # index of a site that has none (lhtml_site/menu.py, lhtml_site/index_page.py)
             menu.run(meta)
             index_page.run(meta)
+            not_found.run(meta, jinja_environment(meta, selected, []))
             if export == 'pdf':          # once the site is complete, menu included
                 pdf_export.export(meta)
 

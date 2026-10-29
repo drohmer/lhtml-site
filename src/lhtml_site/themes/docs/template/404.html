@@ -1,0 +1,27 @@
+{#- The content of 404.html (theme.yaml: not_found), written by lhtml-site when the configuration
+    gives `base_url`; a page 404.md.j2 at the top of the sources replaces it. pathToRoot is
+    base_url here: the page is shown at any URL. site_pages: the pages of the menu, in order. -#}
+{%- set d = docs if docs is defined and docs else {} -%}
+{%- set order = ((d.menu or {}).sections or []) | list -%}
+{%- for entry in site_pages if entry.section and entry.section not in order %}{% set _ = order.append(entry.section) %}{% endfor -%}
+<h1>Page not found</h1>
+<p>There is no page at this address: it may have moved, or the link is out of date.</p>
+<p class="not-found-suggestion" hidden>Did you mean <a href=""></a>?</p>
+<form class="not-found-search" role="search" action="" onsubmit="return false">
+  <label for="not-found-query">Search the documentation</label>
+  <input id="not-found-query" type="search" placeholder="{{ d.search_placeholder or 'Search the docs' }}" autocomplete="off" spellcheck="false">
+</form>
+<h2 id="sections">Sections</h2>
+<ul class="not-found-sections">
+  <li><a href="{{ pathToRoot }}index.html">{{ (d.menu or {}).home_label or 'Home' }}</a></li>
+  {%- for section in order %}
+  {%- set pages = site_pages | selectattr('section', 'equalto', section) | list %}
+  {%- if pages %}
+  {#- the index page of the section (how-to/index.html), else its first page #}
+  {%- set ns = namespace(target=pages[0]) %}
+  {%- for entry in pages | reverse if entry.path.count('/') == 1 and entry.path.endswith('/index.html') %}{% set ns.target = entry %}{% endfor %}
+  <li><a href="{{ pathToRoot }}{{ ns.target.path }}">{{ section }}</a></li>
+  {%- endif %}
+  {%- endfor %}
+</ul>
+<script src="{{ pathToRoot }}theme/js/not_found.js" defer></script>

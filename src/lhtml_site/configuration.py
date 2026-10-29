@@ -53,6 +53,11 @@ RUNTIME_KEYS = frozenset((
 ))
 
 
+# Keys that are absent from the meta of a build when the configuration does not give them
+OPTIONAL_KEYS = ('cache_video_directory', 'chrome', 'design', 'deck', 'decks', 'targets', 'base_url')
+BASE_URL = re.compile(r'(?:/|https?://[^/\s]+/)(?:[^\s?#]*/)?$')
+
+
 class ConfigError(ValueError):
     """An actionable configuration error, displayed without a traceback."""
 
@@ -88,10 +93,14 @@ class Config:
     # {name: {theme: directory}}, the themes resolved to Paths by load_config
     decks: str | None = None
     targets: dict | None = None
+    # Where the site is served ('/', '/docs/', 'https://example.org/docs/'): the
+    # page a theme writes for any URL, 404.html (lhtml_site/not_found.py), links
+    # from it, as it is shown at every depth. The other pages keep relative links.
+    base_url: str | None = None
 
     def to_meta(self):
         values = asdict(self)
-        for key in ('cache_video_directory', 'chrome', 'design', 'deck', 'decks', 'targets'):
+        for key in OPTIONAL_KEYS:
             if values[key] is None:
                 del values[key]
         return values
@@ -160,6 +169,19 @@ def _chrome_executable(values, config_directory):
     if not os.access(file, os.X_OK):
         raise ConfigError(f"'chrome' is not executable: '{file}'")
     values['chrome'] = str(file.resolve())
+
+
+def _base_url(values):
+    """'base_url': the path of the site on its server, from its root and
+    ending with a slash ('/', '/docs/'), or a whole URL ('https://example.org/docs/')."""
+    value = values.get('base_url')
+    if value is None:
+        return
+    if not isinstance(value, str) or not BASE_URL.match(value.strip()):
+        raise ConfigError(f"'base_url' must be the path of the site on its server, starting and ending "
+                          f"with '/' ('/', '/docs/'), or a URL ending with '/' "
+                          f"('https://example.org/docs/'); got {value!r}")
+    values['base_url'] = value.strip()
 
 
 TARGET_NAME = re.compile(r'[A-Za-z][A-Za-z0-9_-]*$')
@@ -249,7 +271,7 @@ def load_config(filename, debug_override=None):
                           "places what goes in <head>")
 
     defaults = Config().to_meta()
-    known = set(defaults) | {'cache_video_directory', 'chrome', 'design', 'deck', 'decks', 'targets'}
+    known = set(defaults) | set(OPTIONAL_KEYS)
     for key in sorted(set(data) - known):
         if key in RUNTIME_KEYS:
             raise ConfigError(f"'{key}' is runtime state and cannot be set in YAML")
@@ -303,6 +325,7 @@ def load_config(filename, debug_override=None):
                           "'toc: keys:' in the theme.yaml of your theme")
 
     _chrome_executable(values, path.parent)
+    _base_url(values)
     _decks_and_targets(values, data, path.parent)
 
     _file_or_inline(values, 'design', dict, 'a mapping (tokens, macros)', path.parent)

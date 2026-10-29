@@ -101,6 +101,24 @@ class ConfigurationTests(unittest.TestCase):
             with self.assertRaises(ConfigError):
                 load_config(self.file)
 
+    def test_base_url_is_a_path_or_a_url_ending_with_a_slash(self):
+        """'base_url': where the site is served, for the page shown at any URL (404.html)."""
+        self.assertNotIn('base_url', load_config(self.file)[0].to_meta())      # absent: no 404.html
+        for value in ('/', '/docs/', '/my-project/v2/', 'https://example.org/', 'http://example.org/docs/',
+                      ' /docs/ '):
+            with self.subTest(value=value):
+                self.write(base_url=value)
+                self.assertEqual(load_config(self.file)[0].base_url, value.strip())
+        for value in ('', 'docs/', '/docs', 'https://example.org', '/docs/?x=1/', 'ftp://example.org/', 3, ['/']):
+            with self.subTest(value=value):
+                self.write(base_url=value)
+                with self.assertRaisesRegex(ConfigError, "'base_url' must be"):
+                    load_config(self.file)
+        result = self.cli('--check-config')
+        self.assertEqual(result.returncode, 1)
+        self.assertIn('base_url', result.stdout)
+        self.assertNotIn('Traceback', result.stderr)
+
     def test_unknown_key_and_removed_keys(self):
         self.write(site_directoy='typo', custom_option=42)
         config, _, warnings = load_config(self.file)

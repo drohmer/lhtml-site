@@ -54,6 +54,12 @@ theme: 'webpage-frame'
 #       doc: 'A remark in gray: note:: ... ::'
 #       css: '.note { color: gray; }'
 
+# Where the site is served: the path from the root of the server ('/', or
+# '/my-project/' for a GitHub project page), or a whole URL. A theme that has a
+# page for the URLs that lead nowhere (docs) writes it, 404.html, with links
+# from there, as it is shown at any depth. Without it, no 404.html.
+# base_url: '/'
+
 # The videos of the pages, converted to the formats every browser reads
 # (needs ffmpeg, and ffpb: pip install ffpb). The converted files are kept
 # in this directory.

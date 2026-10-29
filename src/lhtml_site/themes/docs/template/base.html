@@ -11,6 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{ pageTitle }}{% if pageID != 0 and d.title %} - {{ d.title }}{% endif %}</title>
 {% if page.description %}<meta name="description" content="{{ page.description }}">{% endif %}
+{% if page.not_found %}<meta name="robots" content="noindex">{% endif %}
 <script>
 /* theme before the first paint: the choice of the reader, else the system */
 (function () {
@@ -36,7 +37,7 @@
         onload="renderMathInElement(document.querySelector('main'), {throwOnError: false});"></script>{% endif %}
 {% endblock %}
 </head>
-<body class="{% if page.pagetype %}page-{{ page.pagetype }}{% else %}page-doc{% endif %}{% if page.wide %} page-wide{% endif %}" data-root="{{ pathToRoot }}" data-page-id="{{ pageID }}" data-storage="{{ store }}">
+<body class="{% if page.pagetype %}page-{{ page.pagetype }}{% elif page.not_found %}page-not-found{% else %}page-doc{% endif %}{% if page.wide %} page-wide{% endif %}" data-root="{{ pathToRoot }}" data-page-id="{{ pageID }}" data-storage="{{ store }}">
 
 <a class="skip-link" href="#content">Skip to content</a>
 
@@ -78,7 +79,8 @@
   <div class="sidebar-backdrop" hidden></div>
 
   <main id="content" class="main">
-    <article class="doc" data-pagefind-body{% if page.section %} data-pagefind-meta="section:{{ page.section }}"{% endif %}>
+    {#- 404.html (page.not_found, lhtml_site/not_found.py): out of the search index, no pager #}
+    <article class="doc" {% if page.not_found %}data-pagefind-ignore="all"{% else %}data-pagefind-body{% endif %}{% if page.section %} data-pagefind-meta="section:{{ page.section }}"{% endif %}>
       {#- breadcrumb Section > Group > Page above the title (the section is the eyebrow label);
           section and group link to the index page of the section when the setting
           `section_index` gives one (group anchor = its heading id there, the group name in
@@ -92,7 +94,9 @@
       {% block content %}
       {% endblock %}
     </article>
+    {%- if not page.not_found %}
     <nav class="pager" aria-label="Previous and next pages" data-pagefind-ignore></nav>
+    {%- endif %}
     {%- if d.footer %}
     <footer class="footer" data-pagefind-ignore>
       {{ d.footer }}

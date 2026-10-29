@@ -408,3 +408,12 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
 .breadcrumb a { color: inherit; }
 .breadcrumb a:hover { color: var(--accent-text); }
 .breadcrumb li[aria-current] { color: var(--text-soft); }
+
+/* ---- 404.html (template/404.html) ------------------------------------------------ */
+.not-found-search { margin: 1.6em 0; }
+.not-found-search label { display: block; font-weight: 600; margin-bottom: 6px; }
+.not-found-search input {
+  width: 100%; max-width: 520px; padding: 9px 12px; font: inherit; color: var(--text);
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+}
+.not-found-search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
