@@ -12,12 +12,12 @@
         <link rel="stylesheet" type="text/css" href="{{ pathToRoot }}theme/css/code.css">
         <link rel="stylesheet" type="text/css" href="{{ pathToRoot }}theme/css/classes.css">
         <link rel="stylesheet" type="text/css" href="{{ pathToRoot }}theme/css/design.css">
-        <link rel="stylesheet" type="text/css" href="{{ pathToRoot }}theme/libs/katex/katex.min.css">
+        {% if page.math %}<link rel="stylesheet" type="text/css" href="{{ pathToRoot }}theme/libs/katex/katex.min.css">{% endif %}
     
 
         <script src="{{ pathToRoot }}theme/js/menu.js" defer></script>
-        <script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
-        <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body);" defer></script>
+        {% if page.math %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
+        <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body);" defer></script>{% endif %}
 
         <!-- Additional css and js if needed -->
         {% for cssEntry in css %}

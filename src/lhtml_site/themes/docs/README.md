@@ -19,6 +19,7 @@ section: How-to          # the section of the menu
 group: Shapes            # optional: a group inside the section
 description: One line.   # optional: <meta name="description">
 wide: true               # optional: a wider column (--wide-w), for tables
+math: true               # optional: load KaTeX (default: when the page writes formulas)
 ---
 ```
 
@@ -36,7 +37,9 @@ wide: true               # optional: a wider column (--wide-w), for tables
 - A figure that opens full size on click:
   `<figure class="figure"><a class="figure-zoom" href="a.svg"><img src="a.svg" alt="..."></a><figcaption>...</figcaption></figure>`.
   The width of the image can be set by the CSS variable `--fig-w` (style attribute).
-- Formulas: `\(...\)` and `\[...\]`, rendered by KaTeX.
+- Formulas: `\(...\)`, `\[...\]` and `$$...$$`, rendered by KaTeX. Only the pages that write
+  one outside code load KaTeX (about 280 KB); a page whose formulas come from an included
+  template or a macro says `math: true`, and `math: false` keeps KaTeX off a page.
 
 ## Settings
 

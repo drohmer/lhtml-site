@@ -23,7 +23,7 @@
 })();
 </script>
 <link rel="stylesheet" href="{{ pathToRoot }}theme/css/font.css">
-<link rel="stylesheet" href="{{ pathToRoot }}theme/libs/katex/katex.min.css">
+{% if page.math %}<link rel="stylesheet" href="{{ pathToRoot }}theme/libs/katex/katex.min.css">{% endif %}
 <link rel="stylesheet" href="{{ pathToRoot }}theme/css/docs.css">
 {% for file in d.css or [] %}<link rel="stylesheet" href="{{ pathToRoot }}{{ file }}">
 {% endfor -%}
@@ -31,9 +31,9 @@
 <script src="{{ pathToRoot }}theme/js/site.js" defer></script>
 {% for file in d.js or [] %}<script src="{{ pathToRoot }}{{ file }}" defer></script>
 {% endfor -%}
-<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
+{% if page.math %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
 <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" defer
-        onload="renderMathInElement(document.querySelector('main'), {throwOnError: false});"></script>
+        onload="renderMathInElement(document.querySelector('main'), {throwOnError: false});"></script>{% endif %}
 {% endblock %}
 </head>
 <body class="{% if page.pagetype %}page-{{ page.pagetype }}{% else %}page-doc{% endif %}{% if page.wide %} page-wide{% endif %}" data-root="{{ pathToRoot }}" data-page-id="{{ pageID }}" data-storage="{{ store }}">

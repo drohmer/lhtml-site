@@ -112,7 +112,7 @@ def export_structure(pages, structure_path, public_keys=()):
     `src`, the path of its source."""
     structure_to_export = []
     for page in pages:
-        structure = {'title': page.title, **page.settings,
+        structure = {'title': page.title, **page.settings, 'math': page.math,
                      'dir': page.site_directory, 'filename': os.path.basename(page.site_html),
                      'template': page.site_template, 'level': page.site_directory.count('/'),
                      'src': str(page.src)}

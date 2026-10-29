@@ -141,6 +141,14 @@ class Page:
         return source_scan.Scan(self.text, self.markup)
 
     @property
+    def math(self):
+        """Whether the page loads KaTeX (`page.math` in the templates): the
+        setting `math:` (front matter, config.yaml, deck) when there is one,
+        else whether its source writes mathematics (source_scan.has_math)."""
+        setting = self.settings.get('math')
+        return bool(setting) if setting is not None else source_scan.has_math(self.scan)
+
+    @property
     def settings(self):
         """Its settings, from the least specific to the most: the config.yaml
         of its directory, the front matter of the page itself, then its deck

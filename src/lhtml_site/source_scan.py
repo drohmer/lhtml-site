@@ -162,6 +162,24 @@ def find(pattern, source):
     return list(pattern.finditer(scan(source).masked))
 
 
+# Display mathematics in $$ ... $$, which LHTML leaves as text (its `math`
+# zones are \( ... \) and \[ ... \]); a single $ is not a delimiter of the
+# themes (KaTeX auto-render reads $$, \( and \[ only), so a price stays text.
+DISPLAY_DOLLARS = re.compile(r'\$\$\s*\S.*?\$\$', re.DOTALL)
+NOT_MATH = frozenset(('code', 'comment', 'raw', 'inline_code', 'jinja', 'url'))
+
+
+def has_math(source):
+    """Whether a page writes mathematics for KaTeX: a `math` zone (\\( \\) or
+    \\[ \\]), or $$ ... $$ in its text, neither in code, a comment, a script
+    or a Jinja tag. Mathematics a page gets from an included template or a
+    macro is not seen: the page says `math: true` in its front matter."""
+    source = scan(source)
+    if any(zone.kind == 'math' for zone in source.zones):
+        return True
+    return DISPLAY_DOLLARS.search(mask(source.text, NOT_MATH, source.zones)) is not None
+
+
 def value_tags(macros=None):
     """Tags whose text is a value (URL, file, variant): the built-in ones, and
     the macros that are empty, take a URL or a variant, or render an
