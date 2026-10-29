@@ -1,0 +1,12 @@
+# What the docs theme declares about the build (lhtml_site/theme.py).
+# A documentation site: top bar with search, side menu by section and group,
+# "On this page", breadcrumb, previous / next. Its settings are the `docs`
+# keyword of the configuration (README of the theme: README.md).
+template: 'theme/template/base.html'
+content_block: 'content'
+toc:
+  file: 'js/menu.js'        # receives the table of contents ({{TOC}})
+  keys: [section, group]    # the menu groups the pages by these page settings
+layout:
+  root: '#content article'  # the article, without the menu, the pager and the footer
+  exclude: 'nav, footer'

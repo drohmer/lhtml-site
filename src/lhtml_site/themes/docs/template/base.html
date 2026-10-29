@@ -1,0 +1,111 @@
+{#- The docs theme of lhtml-site: top bar with search, side menu, "On this page", breadcrumb,
+    previous / next, light and dark. Its settings are the `docs` keyword of the configuration
+    (keywords: docs: ...), all optional; see the README of the theme. -#}
+{%- set d = docs if docs is defined and docs else {} -%}
+{%- set store = d.storage or 'docs' -%}
+<!DOCTYPE html>
+<html lang="{{ d.lang or 'en' }}">
+<head>
+{% block head %}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ pageTitle }}{% if pageID != 0 and d.title %} - {{ d.title }}{% endif %}</title>
+{% if page.description %}<meta name="description" content="{{ page.description }}">{% endif %}
+<script>
+/* theme before the first paint: the choice of the reader, else the system */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('{{ store }}-theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    t = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="stylesheet" href="{{ pathToRoot }}theme/css/font.css">
+<link rel="stylesheet" href="{{ pathToRoot }}theme/libs/katex/katex.min.css">
+<link rel="stylesheet" href="{{ pathToRoot }}theme/css/docs.css">
+{% for file in d.css or [] %}<link rel="stylesheet" href="{{ pathToRoot }}{{ file }}">
+{% endfor -%}
+<script src="{{ pathToRoot }}theme/js/menu.js" defer></script>
+<script src="{{ pathToRoot }}theme/js/site.js" defer></script>
+{% for file in d.js or [] %}<script src="{{ pathToRoot }}{{ file }}" defer></script>
+{% endfor -%}
+<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
+<script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" defer
+        onload="renderMathInElement(document.querySelector('main'), {throwOnError: false});"></script>
+{% endblock %}
+</head>
+<body class="{% if page.pagetype %}page-{{ page.pagetype }}{% else %}page-doc{% endif %}{% if page.wide %} page-wide{% endif %}" data-root="{{ pathToRoot }}" data-page-id="{{ pageID }}" data-storage="{{ store }}">
+
+<a class="skip-link" href="#content">Skip to content</a>
+
+<header class="topbar">
+  <button class="icon-btn nav-toggle" type="button" aria-label="Open the menu" aria-expanded="false" aria-controls="sidebar">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+  </button>
+  <a class="brand" href="{{ pathToRoot }}index.html">
+    {%- if d.logo_svg %}
+    <span class="brand-mark" aria-hidden="true">{{ d.logo_svg | safe }}</span>
+    {%- elif d.logo %}
+    <span class="brand-mark" aria-hidden="true"><img src="{{ pathToRoot }}{{ d.logo }}" alt="" width="26" height="26"></span>
+    {%- endif %}
+    <span class="brand-name">{{ d.name or 'Docs' }}</span>{% if d.sub %}<span class="brand-sub">{{ d.sub }}</span>{% endif %}
+  </a>
+  <div class="search" role="search">
+    <svg class="search-icon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    <input id="search" type="search" placeholder="{{ d.search_placeholder or 'Search the docs' }}" autocomplete="off" spellcheck="false" aria-label="Search the documentation" aria-controls="search-results">
+    <kbd class="search-kbd">/</kbd>
+    <div id="search-results" class="search-results" hidden></div>
+  </div>
+  <div class="topbar-actions">
+    {%- if d.repo_url %}
+    <a class="icon-btn" href="{{ d.repo_url }}" aria-label="{{ d.repo_label or 'Repository' }}" title="{{ d.repo_label or 'Repository' }}">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z"/></svg>
+    </a>
+    {%- endif %}
+    <button class="icon-btn theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside id="sidebar" class="sidebar" aria-label="Documentation menu">
+    <nav id="toc" class="nav"></nav>
+  </aside>
+  <div class="sidebar-backdrop" hidden></div>
+
+  <main id="content" class="main">
+    <article class="doc" data-pagefind-body{% if page.section %} data-pagefind-meta="section:{{ page.section }}"{% endif %}>
+      {#- breadcrumb Section > Group > Page above the title (the section is the eyebrow label);
+          section and group link to the index page of the section when the setting
+          `section_index` gives one (group anchor = its heading id there, the group name in
+          lower case with hyphens). Not indexed by the search. -#}
+      {% if page.section %}{% set sec_urls = d.section_index or {} %}{% set is_index = '/' not in (page.dir or '').strip('/') %}{% set sec_url = sec_urls.get(page.section) %}
+      <nav class="breadcrumb" aria-label="Breadcrumb" data-pagefind-ignore><ol>
+        <li class="bc-section">{% if sec_url and not is_index %}<a href="{{ pathToRoot }}{{ sec_url }}">{{ page.section }}</a>{% else %}{{ page.section }}{% endif %}</li>
+        {%- if page.group %}<li>{% if sec_url %}<a href="{{ pathToRoot }}{{ sec_url }}#{{ page.group|lower|replace(' ', '-') }}">{{ page.group }}</a>{% else %}{{ page.group }}{% endif %}</li>{% endif %}
+        {%- if not is_index %}<li aria-current="page">{{ pageTitle }}</li>{% endif %}
+      </ol></nav>{% endif %}
+      {% block content %}
+      {% endblock %}
+    </article>
+    <nav class="pager" aria-label="Previous and next pages" data-pagefind-ignore></nav>
+    {%- if d.footer %}
+    <footer class="footer" data-pagefind-ignore>
+      {{ d.footer }}
+    </footer>
+    {%- endif %}
+  </main>
+
+  <aside class="page-toc" aria-label="On this page">
+    <div id="title_id"></div>
+  </aside>
+</div>
+
+<div id="current-page-id" hidden>{{ pageID }}</div>
+<script id="docs-menu-config" type="application/json">{{ (d.menu or {}) | tojson }}</script>
+</body>
+</html>
