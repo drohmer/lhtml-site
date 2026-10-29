@@ -70,7 +70,10 @@ class BuildTests(unittest.TestCase):
         path.write_text(text, encoding='utf-8')
 
     def build(self, *args, theme='slides'):
-        self.write('c.yaml', yaml.safe_dump({'source_directory': 'src', 'site_directory': 'site', 'theme': theme}))
+        # the formulas stay as Markdown leaves them, for KaTeX in the browser
+        # (the build would render them: lhtml_site/katex_render.py)
+        self.write('c.yaml', yaml.safe_dump({'source_directory': 'src', 'site_directory': 'site', 'theme': theme,
+                                             'katex': {'render': 'browser'}}))
         return subprocess.run([sys.executable, str(REPO / 'generate.py'), '-i', 'c.yaml', *args],
                               cwd=self.root, capture_output=True, text=True)
 

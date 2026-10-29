@@ -18,8 +18,8 @@
 
         <script src="{{ pathToRoot }}theme/js/menu.js" defer></script>
         <script src="{{ pathToRoot }}theme/js/title_id.js" defer></script>
-        {% if page.math %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
-        <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body);" defer></script>{% endif %}
+        {% if page.math and page.math_render != 'build' %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
+        <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" onload="renderMathInElement(document.body{% if page.katex_options %}, {{ page.katex_options|e }}{% endif %});" defer></script>{% endif %}
 
         <!-- Additional css and js if needed -->
         {% for cssEntry in css %}

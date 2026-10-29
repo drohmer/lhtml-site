@@ -7,3 +7,5 @@ pypdf
 # tests/test_packaging.py builds the wheel and the sdist (python -m build --no-isolation)
 build
 setuptools>=77
+# Formulas rendered at build in tests/test_katex_render.py (the extra lhtml-site[math]; compiled from source on Python > 3.12)
+quickjs

@@ -137,6 +137,9 @@ def features():
     return [
         ('PDF export (theme slides-pdf, export: pdf; lhtml-site[pdf])', [playwright, pypdf, chromium]),
         ('Layout report (--layout, --render; playwright of lhtml-site[pdf])', [playwright, chromium]),
+        ('Formulas rendered at build (KaTeX in QuickJS; lhtml-site[math])',
+         [('quickjs', module_check('quickjs')[1], install_hint('quickjs') if installation() == 'pipx'
+           else f'{sys.executable} -m pip install "lhtml-site[math]"')]),
         ('Videos in several codecs (cache_video_directory)',
          [system_check('ffmpeg'), ('ffpb', find_command('ffpb'), install_hint('ffpb', command=True))]),
         ('SASS (.sass files)', [module_check('sass', 'libsass')]),

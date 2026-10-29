@@ -8,6 +8,7 @@ import difflib
 import os
 import re
 
+from lhtml_site import katex_render
 from lhtml_site.filesystem import read_yaml
 from lhtml_site.structure import PRIVATE_KEYS
 
@@ -50,6 +51,7 @@ RUNTIME_KEYS = frozenset((
     'planned_slides',               # entries of the deck without a source yet
     'export_name',                  # the name of the PDF of a deck (lhtml_site/pdf_export.py)
     'build_scope',                  # <deck>/<target>: where its state is kept (lhtml_site/project.py)
+    'math_render',                  # build or browser: where the formulas are rendered (lhtml_site/katex_render.py)
 ))
 
 
@@ -84,6 +86,9 @@ class Config:
     public_page_keys: list[str] = field(default_factory=list)
     plugin_arg: dict = field(default_factory=dict)
     layout: dict = field(default_factory=dict)      # options of the layout analysis (--layout)
+    # The formulas: rendered at build or in the browser, and the macros of
+    # KaTeX (lhtml_site/katex_render.py)
+    katex: dict = field(default_factory=dict)
     cache_video_directory: Path | str | None = None
     chrome: str | None = None
     design: dict | str | None = None
@@ -324,6 +329,9 @@ def load_config(filename, debug_override=None):
                           "the theme. Move the content of 'plugin_arg: menu: keys:' to "
                           "'toc: keys:' in the theme.yaml of your theme")
 
+    problem = katex_render.check_config(values['katex'])
+    if problem:
+        raise ConfigError(problem)
     _chrome_executable(values, path.parent)
     _base_url(values)
     _decks_and_targets(values, data, path.parent)

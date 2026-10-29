@@ -4,6 +4,7 @@ The themes load katex.min.css, katex.min.js and auto-render.min.js when the page
 mathematics outside code (\\( \\), \\[ \\], $$ $$), or when its settings say `math: true`;
 `math: false` drops them from a page that writes some.
 """
+import importlib.util
 import subprocess
 import sys
 from pathlib import Path
@@ -57,6 +58,9 @@ def test_the_setting_overrides_the_detection(tmp_path, text, config, expected):
 
 
 KATEX = ['katex.min.css', 'katex.min.js', 'auto-render.min.js']
+# What a page with formulas loads: the CSS only when they are rendered at build
+# (QuickJS installed: lhtml_site/katex_render.py), the scripts too otherwise
+ON_A_MATH_PAGE = KATEX[:1] if importlib.util.find_spec('quickjs') else KATEX
 
 
 def katex_files(html):
@@ -115,10 +119,10 @@ def test_the_built_pages_load_katex_when_they_have_mathematics(tmp_path, theme, 
         return {key: katex_files((site / html).read_text(encoding='utf-8')) for key, (_, html) in pages.items()}
 
     site = build(project)
-    assert katex_of(site) == {'math': KATEX, 'plain': []}
+    assert katex_of(site) == {'math': ON_A_MATH_PAGE, 'plain': []}
     assert (site / 'theme/libs/katex/katex.min.js').is_file()        # still copied with the theme
 
     # the front matter overrides the detection, both ways
     with_front_matter(pages['math'][0], {'math': False})
     with_front_matter(pages['plain'][0], {'math': True})
-    assert katex_of(build(project)) == {'math': [], 'plain': KATEX}
+    assert katex_of(build(project)) == {'math': [], 'plain': ON_A_MATH_PAGE}

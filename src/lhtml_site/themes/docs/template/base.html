@@ -32,9 +32,9 @@
 <script src="{{ pathToRoot }}theme/js/site.js" defer></script>
 {% for file in d.js or [] %}<script src="{{ pathToRoot }}{{ file }}" defer></script>
 {% endfor -%}
-{% if page.math %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
+{% if page.math and page.math_render != 'build' %}<script src="{{ pathToRoot }}theme/libs/katex/katex.min.js" defer></script>
 <script src="{{ pathToRoot }}theme/libs/katex/contrib/auto-render.min.js" defer
-        onload="renderMathInElement(document.querySelector('main'), {throwOnError: false});"></script>{% endif %}
+        onload="renderMathInElement(document.querySelector('main'), {{ (page.katex_options or '{"throwOnError": false}')|e }});"></script>{% endif %}
 {% endblock %}
 </head>
 <body class="{% if page.pagetype %}page-{{ page.pagetype }}{% elif page.not_found %}page-not-found{% else %}page-doc{% endif %}{% if page.wide %} page-wide{% endif %}" data-root="{{ pathToRoot }}" data-page-id="{{ pageID }}" data-storage="{{ store }}">

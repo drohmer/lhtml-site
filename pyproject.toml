@@ -43,6 +43,11 @@ dependencies = [
 # Playwright, for the PDF export and the layout report (lhtml_site/browser.py); its browser comes
 # from `python -m playwright install --only-shell chromium`
 pdf = ["playwright>=1.49", "pypdf>=4"]
+# QuickJS, which runs the KaTeX of the theme to render the formulas at build time
+# (lhtml_site/katex_render.py); without it, the browser renders them. An extra, not a
+# dependency: its wheels stop at CPython 3.12 (and cover neither Linux on ARM nor musl),
+# elsewhere pip compiles it, which needs a C compiler.
+math = ["quickjs>=1.19"]
 
 [project.urls]
 Repository = "https://github.com/drohmer/lhtml-site"

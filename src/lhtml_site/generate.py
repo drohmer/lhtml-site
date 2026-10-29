@@ -33,6 +33,7 @@ from lhtml_site import source_scan
 from lhtml_site import theme
 from lhtml_site import menu
 from lhtml_site import headings
+from lhtml_site import katex_render
 from lhtml_site import wrap
 from lhtml_site import index_page
 from lhtml_site import not_found
@@ -852,6 +853,7 @@ def generate_site(meta, selected, built):
         meta['loaded_design'] = load_project_design(meta)
         meta['macros'] = design.lhtml_macros(meta['loaded_design'])
         sitemap, (credits_of, credit_errors) = prepare_data(meta, selected, built, log)
+        katex_render.prepare(meta, log)         # page.math_render: build or browser
         # theme/css/design.css and .structure/design.md, always written (even
         # empty): the theme may link it, and --only must not keep a previous one
         path = design.write_design(meta, meta['loaded_design'])
@@ -899,6 +901,10 @@ def generate_site(meta, selected, built):
 
     with log.stage('LHTML'):
         failed += render_lhtml(meta, built, log, failed_before=failed)
+
+    # The formulas, once the HTML of the pages is final (lhtml_site/katex_render.py)
+    with log.stage('Formulas'):
+        katex_render.run(meta, log, failed={page.site_html for page in failed})
 
     # SASS compilation
     compile_sass(meta, log)

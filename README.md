@@ -238,6 +238,7 @@ for the way lhtml-site is installed:
 |---|---|
 | PDF export (`slides-pdf`) | `playwright` and `pypdf` (Python, the extra `lhtml-site[pdf]`) and Playwright's Chromium: see [PDF export](#pdf-export) |
 | Layout report (`--layout`, `--render`) | the same `playwright` and Chromium |
+| Formulas rendered at build | `quickjs` (Python, the extra `lhtml-site[math]`): see [Formulas](#formulas) |
 | Videos in several codecs (`cache_video_directory:`) | `ffmpeg`, and `ffpb` (Python) |
 | SASS (`.sass` files) | `libsass` (Python) |
 | Figures in code (`*.svg.py`, `*.svg.tex`) | the libraries their scripts import, such as `matplotlib`, `numpy` (Python); `latex` and `dvisvgm` (TeX Live) |
@@ -253,10 +254,34 @@ instead:
 pipx inject lhtml-site matplotlib numpy          # figures in code
 pipx inject lhtml-site libsass                   # SASS
 pipx inject --include-apps lhtml-site ffpb       # videos (a command: --include-apps)
+pipx inject lhtml-site quickjs                   # formulas rendered at build
 ```
 
 In a virtual environment or a checkout, `pip install matplotlib numpy` (and
 `libsass`, `ffpb`) in the Python that runs lhtml-site does the same.
+
+### Formulas
+
+The themes render the formulas of a page (`\(...\)`, `\[...\]`, `$$...$$`, outside code)
+with KaTeX. With `quickjs` installed (`pip install "lhtml-site[math]"`, or
+`pipx inject lhtml-site quickjs`), the build renders them: the KaTeX of the theme runs in
+QuickJS, a JavaScript interpreter of about 1 MB (no Node, no browser), and the page gets
+the KaTeX HTML and MathML of each formula and `katex.min.css`, without any KaTeX script:
+no TeX source shown while the page loads, and nothing for the PDF export or the layout
+report to wait for. Without it, the page loads KaTeX and renders its formulas in the
+browser, and the build says so in one line. `quickjs` has wheels up to Python 3.12; on a
+newer Python pip compiles it, which needs a C compiler (Xcode command line tools, gcc,
+Visual Studio Build Tools).
+
+```yaml
+katex:
+  render: build                        # or browser: always in the browser
+  macros: {'\RR': '\mathbb{R}'}       # for KaTeX, at build and in the browser
+```
+
+A formula that KaTeX cannot read is shown in red and is a warning of the build, at the
+line of the page (an error with `--strict`). The formulas rendered are kept in
+`.verification/katex.json`, the next build only renders the new ones.
 
 ### PDF export
 

@@ -38,8 +38,14 @@ math: true               # optional: load KaTeX (default: when the page writes f
   `<figure class="figure"><a class="figure-zoom" href="a.svg"><img src="a.svg" alt="..."></a><figcaption>...</figcaption></figure>`.
   The width of the image can be set by the CSS variable `--fig-w` (style attribute).
 - Formulas: `\(...\)`, `\[...\]` and `$$...$$`, rendered by KaTeX. Only the pages that write
-  one outside code load KaTeX (about 280 KB); a page whose formulas come from an included
-  template or a macro says `math: true`, and `math: false` keeps KaTeX off a page.
+  one outside code load KaTeX; a page whose formulas come from an included template or a
+  macro says `math: true`, and `math: false` keeps KaTeX off a page. With `quickjs`
+  installed (`lhtml-site[math]`) the build renders the formulas: the page loads
+  `katex.min.css` only (its fonts when a formula uses them), not the about 280 KB of
+  scripts, and shows no TeX source while it loads. Otherwise, or with
+  `katex: {render: browser}` in `configure.yaml`, KaTeX renders them in the browser
+  (`page.math_render` says which, for a template). Macros for both:
+  `katex: {macros: {'\RR': '\mathbb{R}'}}` (README of lhtml-site, "Formulas").
 
 ## Settings
 
