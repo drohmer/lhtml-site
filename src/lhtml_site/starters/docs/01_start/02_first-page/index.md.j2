@@ -1,0 +1,28 @@
+---
+title: A first page
+section: Get started
+description: Add a page to the site.
+---
+
+# A first page
+
+A page is a file `index.md.j2` (Markdown) or `index.html.j2` (LHTML) in its own directory.
+Copy a directory to add a page; its front matter says where it goes in the menu:
+
+```yaml
+---
+title: A first page        # the title in the menu and in the browser tab
+section: Get started       # the section of the menu
+group: Basics              # optional: a group inside the section
+description: One line.     # optional: the description of the page
+---
+```
+
+## Headings
+
+The second-level headings of a page are listed in the "On this page" column, on the right
+of a wide screen.
+
+## Math
+
+A formula between `\(` and `\)`: \(e^{i\pi} + 1 = 0\).

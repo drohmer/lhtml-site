@@ -1,0 +1,23 @@
+---
+title: Install
+section: Get started
+description: Install lhtml-site and build the site.
+---
+
+# Install
+
+lhtml-site is a Python package:
+
+```sh
+pip install lhtml-site
+```
+
+Build the site from the directory of `configure.yaml`, then open `.site/index.html`:
+
+```sh
+lhtml-site
+lhtml-site --watch    # rebuilds on each save
+```
+
+The search box needs an index, built after the site by Pagefind (see
+[Search](../../02_guides/03_search/index.html)).

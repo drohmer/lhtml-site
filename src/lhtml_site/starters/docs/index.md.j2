@@ -1,0 +1,25 @@
+---
+title: Home
+description: A documentation site built with lhtml-site and its docs theme.
+---
+{# The home page: it has no `section`, so it is at the top of the menu. The other pages are
+   in numbered directories, one per section (01_start, 02_guides, ...): without a deck, the
+   pages follow the order of their paths, and the index.md.j2 of a section directory comes
+   before its pages. Each page names its section (and group) in its front matter. #}
+
+# My documentation
+
+This site was created by `lhtml-site init --theme docs`. Edit this file, `src/index.md.j2`,
+save it, and the page is rebuilt.
+
+## Where to start
+
+- [Get started](01_start/index.html): install, then write a first page.
+- [Guides](02_guides/01_write/index.html): writing, figures, search.
+- [Reference](03_reference/01_settings/index.html): the settings of the theme.
+
+## The menu
+
+The menu groups the pages by the `section` of their front matter, and inside a section by
+their `group`. The settings of the theme (name, logo, order of the sections...) are the
+`docs` keyword of `configure.yaml`: see the [reference](03_reference/01_settings/index.html).

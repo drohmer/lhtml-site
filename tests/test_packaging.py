@@ -76,6 +76,7 @@ class PackageContentTest(unittest.TestCase):
         for files in (self.wheel_files, self.sdist_files):
             self.assertEqual([f for f in files if f.startswith('example/')], [])
             for starter in ('starters/slides/01_title/index.html.j2', 'starters/site/01_welcome/index.html.j2',
+                            'starters/docs/index.md.j2', 'themes/docs/theme.yaml', 'themes/docs/README.md',
                             'themes/slides/theme.yaml', 'layout/page.js', 'docs/agents.md',
                             'configure_example.yaml', 'feedback.js'):
                 self.assertIn(starter, files)

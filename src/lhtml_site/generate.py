@@ -944,9 +944,10 @@ def generate_site(meta, selected, built):
 # The themes of the generator, for `lhtml-site init --theme` (README, "Getting started")
 THEMES = {'webpage-frame': 'web pages with a navigation menu (the default)',
           'slides': 'slides shown in the browser (1920x1080)',
-          'slides-pdf': 'the same slides, exported to a PDF (needs Playwright, lhtml-site[pdf]: lhtml-site doctor)'}
+          'slides-pdf': 'the same slides, exported to a PDF (needs Playwright, lhtml-site[pdf]: lhtml-site doctor)',
+          'docs': 'a documentation site: sections, search, "On this page" (themes/docs/README.md)'}
 # The pages `init` copies into the src/ of a new project, by theme (lhtml_site/starters/)
-STARTERS = {'webpage-frame': 'site', 'slides': 'slides', 'slides-pdf': 'slides'}
+STARTERS = {'webpage-frame': 'site', 'slides': 'slides', 'slides-pdf': 'slides', 'docs': 'docs'}
 
 
 def init_project(arguments):
@@ -984,7 +985,8 @@ def init_project(arguments):
     if has_sources:
         print(f"Project set up in {directory}: {config.name} builds the pages of src/ with the theme {args.theme}.")
     else:
-        first = min(p for p in sources.rglob('index.html.j2')).relative_to(directory).as_posix()
+        first = min(sources.rglob('index.*.j2'), key=lambda p: (len(p.parts), p))   # the top page
+        first = first.relative_to(directory).as_posix()
         print(f"Project set up in {directory}: {config.name}, and pages to start from in src/ "
               f"(theme {args.theme}).\nEdit {first}; copy one of the directories of src/ to add a page.")
     print(f"Next: {go}lhtml-site (build into .site/, then open .site/index.html in a browser); "

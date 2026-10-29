@@ -1,0 +1,21 @@
+---
+title: Search
+section: Guides
+group: Publishing
+description: Build the index of the search box with Pagefind.
+---
+
+# Search
+
+The search box of the top bar uses [Pagefind](https://pagefind.app). Its index is built
+after the site, from the generated pages:
+
+```sh
+lhtml-site
+python -m pip install pagefind[extended]
+python -m pagefind --site .site
+```
+
+The index is written in `.site/pagefind/`. The search works when the site is served over
+http (`python -m http.server -d .site`), not from a file opened on the disk. The keys `/`
+and Ctrl+K (Cmd+K) go to the search box; the arrows choose a result.

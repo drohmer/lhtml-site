@@ -1,0 +1,25 @@
+---
+title: Settings of the theme
+section: Reference
+description: The docs keyword of configure.yaml.
+---
+
+# Settings of the theme
+
+Every setting is optional. They go in `configure.yaml`, under `keywords: docs:`:
+
+```yaml
+keywords:
+  docs:
+    name: My project            # in the top bar
+    sub: docs                   # smaller, after the name
+    title: My project docs      # after the title of a page, in the browser tab
+    repo_url: https://github.com/me/project
+    footer: My project. Built with lhtml-site.
+    menu:
+      sections: [Get started, Guides, Reference]
+      section:
+        Reference: {open: false}
+```
+
+The full list is in the README of the theme, `themes/docs/README.md` in the package.

@@ -171,6 +171,9 @@ each build, the slides in the browser and the PDF, declare two targets:
 - A website (documentation, a course) rather than slides:
   `lhtml-site init my-site` (the `webpage-frame` theme, two pages to start
   from).
+- A documentation site with sections, search and an "On this page" column:
+  `lhtml-site init my-docs --theme docs` (a few pages to start from; settings,
+  overlay and search: [themes/docs/README.md](src/lhtml_site/themes/docs/README.md)).
 - *You already have your pages* in a directory `src/`: in the directory that
   contains `src/`, run `lhtml-site init --theme slides`. It writes only
   `configure.yaml` there; nothing else is created or changed.
@@ -181,6 +184,7 @@ The theme is the `--theme` of `init`, or the key `theme:` of
 | Theme | For | Needs |
 |---|---|---|
 | `webpage-frame` (default) | Web pages: documentation, a course website, with a navigation menu | nothing more |
+| `docs` | A documentation site: top bar with search, menu by section and group, "On this page", breadcrumb, previous / next, light and dark | the search index: [Pagefind](src/lhtml_site/themes/docs/README.md#search), after the build |
 | `slides` | Slides shown in the browser, 1920x1080, one page per slide | nothing more |
 | `slides-pdf` | The same slides, exported to a PDF, with an image of each slide | Playwright and its Chromium: see [PDF export](#pdf-export) |
 
