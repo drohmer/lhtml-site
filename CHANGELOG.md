@@ -11,6 +11,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   screen. A pinch, a vertical scroll, a page zoomed in, and a swipe on a
   video, a form, the menu or a block that scrolls sideways (code) are left
   to the browser.
+- The `docs` theme, for a documentation site: a top bar with the search box
+  (Pagefind, `/` and Ctrl/Cmd+K, keyboard navigation of the results), a side
+  menu by the `section` and `group` of the pages (collapsible, its state kept
+  by the browser, scrolled to the current page), "On this page", a
+  breadcrumb, previous / next, light and dark modes, a drawer menu on
+  phones and figures that open full size. Its settings are the `docs` key
+  of `keywords:` (name, logo, repository link, footer, order of the sections,
+  sections and groups closed at first...); an overlay adds its own
+  stylesheets and scripts (`css:`, `js:`, `window.docsTheme`). See
+  `themes/docs/README.md`.
+- `lhtml-site init --theme docs`: a documentation site to start from, three
+  sections in Markdown pages.
+- A `404.html` for the `docs` theme, when the configuration sets the new key
+  `base_url` (`/`, `/docs/` or a full URL): served at any depth, its links
+  are absolute; a message, the search box, the sections and the page of the
+  menu closest to the address asked. `src/404.md.j2` replaces its content.
+  It is out of the menu, of previous / next and of the search, and not
+  indexed (`noindex`). A theme names the template of this content in
+  `theme.yaml`, with the new key `not_found:`.
+- The formulas are rendered at build time when `quickjs` is installed (the
+  extra `lhtml-site[math]`): the KaTeX of the theme runs in QuickJS, and the
+  page gets the HTML and MathML of each formula and `katex.min.css`, without
+  any KaTeX script. Without `quickjs`, the browser renders them as before,
+  and the build says so in one line. A formula KaTeX cannot read is shown in
+  red and is a warning at its line (an error with `--strict`). The formulas
+  rendered are kept in `.verification/katex.json`. `lhtml-site doctor` lists
+  the feature.
+- The configuration key `katex`: `render: build` (default) or `browser`, and
+  `macros`, used at build and in the browser.
+
+### Changed
+- The themes load KaTeX only on the pages that write formulas (`\(`, `\[`,
+  `$$`, outside code, comments and Jinja). The page setting `math: true` or
+  `math: false` decides instead. Templates read `page.math`,
+  `page.math_render` (`build` or `browser`) and `page.katex_options`.
+- KaTeX 0.16.47 in the four themes (it was 0.12.0).
+- `lhtml-site init` accepts a starter written in Markdown, and names its top
+  page.
 
 ### Fixed
 - The transcoded videos: only the variants of the videos of the pages built

@@ -36,8 +36,8 @@ lhtml-site doctor
   --scaffold           Create the source of the deck slides that do not exist yet
   init [DIR]           Write configure.yaml in DIR (default: the current directory): its pages in
                        src/ if it has one, else pages to start from copied into src/ (four slides
-                       for the slides themes, two pages for webpage-frame); --theme NAME (default
-                       webpage-frame, see Getting started)
+                       for the slides themes, two pages for webpage-frame, three sections for
+                       docs); --theme NAME (default webpage-frame, see Getting started)
   doctor               Say what each optional feature (PDF export, layout report, videos, SASS,
                        figures) finds and lacks, with the command that installs it; changes nothing
 ```
@@ -144,6 +144,8 @@ Optional keys:
 | `design` | Tokens, macros and layouts overriding the theme's `design.yaml` (mapping, or path of a YAML file; see [Design](#design-tokens-macros-and-layouts)) |
 | `decks` | `directories`: each directory of the sources is a deck, built as a site of its own (see [Decks and targets](#decks-and-targets)) |
 | `targets` | `{name: {theme: ...}}`: each deck is built once per target, with its theme (instead of `theme`) |
+| `katex` | Formulas: `render: build` (default: rendered at build when `quickjs` is installed, the extra `lhtml-site[math]`, else in the browser) or `browser` (always in the browser); `macros`, a mapping `'\RR': '\mathbb{R}'` given to KaTeX at build and in the browser. See [Formulas](#formulas) |
+| `base_url` | Path of the site on its server, starting and ending with `/` (`/`, `/docs/`), or a full URL ending with `/`. Set, a theme that declares `not_found:` gets a `404.html` at the root of the site, with absolute links built from it (it is served at any depth); the other pages keep their relative links. Unset (default), no `404.html` |
 
 ### Decks and targets
 
@@ -203,7 +205,7 @@ The generator runs the following stages:
 2. **Pre-process plugins** — Plugin hooks before Jinja2 rendering
 3. **Jinja2 rendering** — Render the templates with their variables (see [Template variables](#template-variables))
 4. **Mid-process plugins** — Plugin hooks between Jinja2 and LHTML
-5. **LHTML conversion** — Convert LHTML markup to HTML, with optional tidy (a Markdown page is converted in step 3)
+5. **LHTML conversion** — Convert LHTML markup to HTML, with optional tidy (a Markdown page is converted in step 3), then **Formulas** — render the formulas of the pages that have some with the KaTeX of the theme, when they are rendered at build (see [Formulas](#formulas))
 6. **SASS compilation** — Compile `.sass` files to `.css` (if libsass installed)
 7. **Post-process plugins** — Plugin hooks after all conversions
 
@@ -234,8 +236,9 @@ def noise(x): ...
   is refused with a message.
 - CommonMark, with tables and strikethrough; raw HTML is kept. A fenced code
   block is highlighted as LHTML highlights `code::[python]`.
-- The mathematics `\(...\)` and `\[...\]` is kept as written for MathJax
-  (Markdown alone would read `\(` as `(` and `_` as emphasis).
+- The mathematics `\(...\)` and `\[...\]` is kept as written for KaTeX
+  (Markdown alone would read `\(` as `(` and `_` as emphasis); see
+  [Formulas](#formulas).
 - A heading gets an id as in LHTML (`{: #id}` sets it by hand: `{#id}`
   would be a Jinja comment); the title of the page is its first heading,
   without its marks. Only the `#` headings: an underlined one
@@ -260,6 +263,9 @@ Each page is rendered by Jinja2 with:
 | `page` | Metadata of the page: its `config.yaml` and deck entry (`page.notes`, `page.layout`), title, place in the site |
 | `layout` | Layout of the page, when the page sets it with `{% set layout = 'side' %}` (the front matter sets `page.layout` instead, see [Design](#design-tokens-macros-and-layouts)) |
 | `credit(file)`, `credits` | Credit of a file of the page, credits of all the pages (see [Credits](#credits-origin-of-the-slides-figures-in-code)) |
+| `page.math` | The page has formulas: detected in its source, or its setting `math: true` / `math: false` (see [Formulas](#formulas)) |
+| `page.math_render` | Where its formulas are rendered: `build` (the page needs `katex.min.css` only) or `browser` (it loads the KaTeX scripts too) |
+| `page.katex_options` | The options of KaTeX (delimiters, macros), as JSON for auto-render in the browser |
 | keys of `keywords` | Values of the configuration (`params`, `page`, `credit`, `credits` are reserved) |
 
 `{% extends %}`, `{% include %}` and `{% import %}` read the templates of the
@@ -268,10 +274,11 @@ deck, then of the site (`theme/template/base.html`).
 
 ## Themes
 
-Three built-in themes are available, named alone in the configuration
+Four built-in themes are available, named alone in the configuration
 (`theme: slides`; see [Getting started](../../../README.md#getting-started-your-first-slides) for which to choose):
 
 - **`webpage-frame/`** — Standard website with navigation menu, suitable for documentation and course pages
+- **`docs/`** — Documentation site: search (Pagefind), menu by section and group, "On this page", breadcrumb, previous / next, light and dark, a `404.html` with `base_url`; its settings are the `docs` key of `keywords:` (see `themes/docs/README.md`)
 - **`slides/`** — Presentation slides for browser display
 - **`slides-pdf/`** — Presentation slides optimized for PDF export
 
@@ -280,6 +287,33 @@ that content pages can override; which template and which block is what the
 theme declares in its `theme.yaml`, with what the layout analysis must take
 as the content of a page - see
 [Theme: what it declares about the build](#theme-what-it-declares-about-the-build).
+
+## Formulas
+
+The themes render the formulas with KaTeX, on the pages that have some: the
+build finds `\(...\)`, `\[...\]` and `$$...$$` in the source of a page,
+outside code, comments and Jinja (a single `$...$` is not a delimiter, so a
+price stays text). Formulas a page gets from an included template or a macro
+are not seen: the page setting `math: true` (or `math: false`) decides
+instead. A page with no formula references no KaTeX file.
+
+- **At build** (`katex: render: build`, the default, with `quickjs`
+  installed: the extra `lhtml-site[math]`): the stage Formulas runs the
+  `libs/katex/katex.min.js` of the theme in QuickJS, so that the HTML always
+  matches the CSS of the theme. The page gets the KaTeX HTML and MathML of
+  each formula and `katex.min.css`, without any KaTeX script. A formula
+  KaTeX cannot read is shown in red (`katex-error`) and is a warning at its
+  line in the source (an error with `--strict`). The formulas rendered are
+  kept in `.verification/katex.json`, by TeX, display mode, options and the
+  hash of `katex.min.js`.
+- **In the browser** (`render: browser`, or `quickjs` missing, which the
+  build says in one line): the page loads `katex.min.js` and auto-render,
+  which also render the `\begin{equation}`-style environments.
+- `katex: macros:` (`{'\RR': '\mathbb{R}'}`) is given to KaTeX in both
+  cases.
+
+`quickjs` has wheels up to Python 3.12; on a newer Python, pip compiles it,
+which needs a C compiler. `lhtml-site doctor` says whether it is found.
 
 ## PDF export
 
@@ -446,7 +480,15 @@ layout:                                # what the layout analysis reads
   exclude: 'nav, footer'               # children of the root that are not content
   width: 1920                          # size of a page, in CSS pixels
   height: 1080
+not_found: 'theme/template/404.html'   # the content of 404.html (with base_url)
 ```
+
+`not_found:` names, in the site, the template of the content of `404.html`:
+the build writes that page at the root of the site when the configuration
+sets `base_url` (see [Configuration](#configuration)), out of the menu, of
+previous / next and of the search index; a page `src/404.md.j2` (or
+`.html.j2`) of the project replaces the content of the theme. The `docs`
+theme declares one.
 
 Everything is optional and a theme with no `theme.yaml` builds as before.
 The order is **engine, then theme, then project**: the defaults above are
@@ -459,7 +501,7 @@ A theme may declare only `root`, `exclude`, `width`, `height` and
 directory, jobs) belong to a project. An unknown key is refused by name,
 and `--check-config` prints the manifest the build will use.
 
-The three themes shipped declare theirs. `webpage-frame` holds its content
+The four themes shipped declare theirs. `webpage-frame` holds its content
 in `#main-content-centered`: a project using it used to have to write that
 selector in its own configuration, and a project that did not had its whole
 page measured as a single block - the example site went from 3 blocks over
