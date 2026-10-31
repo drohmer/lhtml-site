@@ -640,5 +640,22 @@ def test_a_theme_keeps_out_of_the_site_what_only_the_build_reads(tmp_path):
     result = build(config)
     assert result.returncode == 0, result.stdout
     assert (site / 'a/index.html').is_file() and (site / 'theme/js/navigation.js').is_file()
-    for name in ('layouts', 'template', 'theme.yaml', 'design.yaml'):
+    for name in ('layouts/base.html', 'template', 'theme.yaml', 'design.yaml'):
         assert not (site / 'theme' / name).exists(), name
+
+
+def test_a_template_next_to_the_assets_of_its_theme_leaves_them_in_the_site(tmp_path):
+    """theme.yaml names a file: the directory it is in keeps the rest."""
+    config, source, site = _project(tmp_path)
+    theme = tmp_path / 'mytheme'
+    shutil.copytree(REPO / 'src/lhtml_site/themes/slides', theme)
+    (theme / 'template/base.html').rename(theme / 'css/base.html')
+    manifest = theme / 'theme.yaml'
+    manifest.write_text(manifest.read_text().replace("'theme/template/base.html'", "'theme/css/base.html'"))
+    config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), 'theme': str(theme)}))
+    assert build(config).returncode == 0
+    assert (site / 'theme/css/main.css').is_file() and not (site / 'theme/css/base.html').exists()
+    (site / 'theme/css/base.html').write_text('copied by an earlier version')
+    (source / 'b/index.html.j2').write_text('= Page b v2\n')
+    assert build(config, '--only', 'b').returncode == 0
+    assert (site / 'theme/css/main.css').is_file() and not (site / 'theme/css/base.html').exists()

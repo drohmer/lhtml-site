@@ -114,8 +114,8 @@ that list into `structure/structure.{json,yaml}` of the site (a custom theme
 or plugin that reads it there), `publish_sitemap: true` writes `sitemap/`, a
 redirection per page named after its title id (`sitemap/introduction.html`,
 marked `noindex` for the search engines), a stable address for a link from
-elsewhere. The theme's `theme.yaml` and `design.yaml`, and the directories of
-the templates its `theme.yaml` names, stay out of the site too. The site of
+elsewhere. The theme's `theme.yaml` and `design.yaml`, and the templates its
+`theme.yaml` names elsewhere than `template/`, stay out of the site too. The site of
 an earlier version held all of them: the next build, full or `--only`,
 writes a site without them. What is written for the author and
 their agent goes to `.structure/`, next to the configuration: `agents.md`

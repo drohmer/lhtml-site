@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 - The site holds no file of the generator any more, which the server served
   to anyone: the Jinja templates of the theme (`theme/template/`, and the
-  directories its `theme.yaml` names), its `theme.yaml` and `design.yaml`
+  templates its `theme.yaml` names), its `theme.yaml` and `design.yaml`
   are read in the theme and not copied; the record of the pages that
   `--only` completes is kept in `.verification/structure.json` (next to the
   dependency store, with the site it describes, written once that site is

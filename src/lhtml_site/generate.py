@@ -232,8 +232,9 @@ def other_sources(selected):
 # Guide of the procedure for AI agents, copied into each project (.structure/agents.md)
 AGENTS_GUIDE = GENERATOR_DIRECTORY / 'docs' / 'agents.md'
 # The files of a theme that only the build reads, where they are: its Jinja
-# templates (template/, and the directories theme.yaml names for template
-# and not_found) and its declarations (theme.yaml, design.yaml)
+# templates (template/, and the files theme.yaml names for template and
+# not_found, wherever they are: never their directory, which may hold the
+# assets of the theme) and its declarations (theme.yaml, design.yaml)
 THEME_TEMPLATES = 'template'
 THEME_DECLARATIONS = (theme.MANIFEST, design.DESIGN_FILE)
 
@@ -245,8 +246,7 @@ def theme_build_files(meta):
     for key in ('template', 'not_found'):
         name = manifest.get(key)
         if name and name.startswith('theme/') and '..' not in Path(name).parts:
-            parent = Path(name[len('theme/'):]).parent
-            found.add(parent.as_posix() if parent.parts else name[len('theme/'):])
+            found.add(name[len('theme/'):])
     return sorted(found)
 
 

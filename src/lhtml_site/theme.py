@@ -27,8 +27,8 @@ The manifest:
                                            # for any missing URL (lhtml_site/not_found.py)
 
 `template` and `not_found` are named as `theme/` followed by their path in
-the theme: the build reads them there, and neither they, their directory nor
-this file is copied into the site (lhtml_site/generate.py, theme_build_files).
+the theme: the build reads them there, and neither they, template/ nor this
+file is copied into the site (lhtml_site/generate.py, theme_build_files).
 
 A theme with no `toc:` has no menu, and the build writes none. That is how
 a theme says so - not a switch in a project's configuration, which has no
