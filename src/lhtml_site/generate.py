@@ -4,7 +4,7 @@ Pipeline: copy sources → Jinja2 rendering → LHTML conversion → SASS compil
 with plugin hooks at pre/mid/post stages.
 """
 
-from jinja2 import ChoiceLoader, Environment, FileSystemLoader, FunctionLoader, TemplateError
+from jinja2 import ChoiceLoader, Environment, FileSystemLoader, FunctionLoader, PrefixLoader, TemplateError
 from jinja2 import meta as jinja_meta
 import tidylib
 import yaml
@@ -48,7 +48,7 @@ from lhtml_site.configuration import (BuildContext, ConfigError, GENERATOR_DIREC
                                       load_config, validate_paths)
 from lhtml_site import layout_options
 from lhtml_site.build_output import links_out_of, staged_site
-from lhtml_site.structure import documents_directory
+from lhtml_site.structure import documents_directory, save as save_structure
 
 import lhtml
 
@@ -231,6 +231,9 @@ def other_sources(selected):
 
 # Guide of the procedure for AI agents, copied into each project (.structure/agents.md)
 AGENTS_GUIDE = GENERATOR_DIRECTORY / 'docs' / 'agents.md'
+# The directory of the Jinja templates of a theme (theme.yaml: template, not_found),
+# read where it is and not copied into the site
+THEME_TEMPLATES = 'template'
 
 
 def prepare_data(meta, selected, built, log):
@@ -253,8 +256,15 @@ def prepare_data(meta, selected, built, log):
             exclude=[meta.get('published_site_directory'), meta.get('config_file'),
                      meta['deck'] if isinstance(meta.get('deck'), str) else None,
                      str(documents_directory(meta))])
+        # The theme, but its Jinja templates: the build reads them in the
+        # theme (jinja_environment), and the site would serve them as text
         log.debug(f"Copy theme '{meta['theme']}' -> '{dir_site / 'theme'}'")
-        warnings += filesystem.copy_directories(meta['theme'], dir_site / 'theme/')
+        warnings += filesystem.copy_directories(meta['theme'], dir_site / 'theme/',
+                                                exclude=[Path(meta['theme']) / THEME_TEMPLATES])
+    else:           # the templates a previous version copied with the theme (the build reads them in the theme)
+        templates = dir_site / 'theme' / THEME_TEMPLATES
+        if templates.is_dir() and not templates.is_symlink():
+            shutil.rmtree(templates)
     if only:        # a page that fails keeps its previous version
         meta['previous_pages'] = {}
         for page in built:
@@ -276,13 +286,37 @@ def prepare_data(meta, selected, built, log):
 
     log.debug(f"Found {len(selected)} template files")
     sitemap = generator_tool.extract_titles(selected, meta['macros'])
-    generator_tool.export_sitemap(sitemap, dir_site / 'sitemap/')
-    meta['structure'] = generator_tool.export_structure(selected, dir_site / 'structure/',
-                                                       meta.get('public_page_keys') or ())
+    # sitemap/ and structure/ are written into the site only when the
+    # configuration asks for them; the build keeps its state in
+    # .verification/ (lhtml_site/structure.py), saved once the build succeeded
+    if meta.get('publish_sitemap'):
+        generator_tool.export_sitemap(sitemap, dir_site / 'sitemap/')
+    else:           # --only: what a previous build left in the site
+        generator_tool.remove_sitemap(dir_site / 'sitemap/')
+    meta['structure'], meta['structure_state'] = generator_tool.export_structure(
+        selected, meta.get('public_page_keys') or ())
+    if meta.get('publish_structure'):
+        generator_tool.write_structure(meta['structure_state'], dir_site / 'structure/')
+    else:
+        remove_published_structure(meta)
     shutil.copy2(AGENTS_GUIDE, documents_directory(meta) / 'agents.md')
     built_set = set(built)
     meta['built'] = [entry for page, entry in zip(selected, meta['structure']) if page in built_set]
     return sitemap, write_credits_and_todo(meta, selected, log)
+
+
+def remove_published_structure(meta):
+    """--only: the structure/ a previous build wrote into the site (1.0
+    wrote it, publish_structure does), unless the sources hold it. The
+    title_id.json of 1.0 stays: --only reads it (lhtml_site/headings.py)."""
+    for name in ('structure.json', 'structure.yaml'):
+        path = meta['site_directory'] / 'structure' / name
+        if path.is_file() and not path.is_symlink() \
+                and not (Path(meta['source_directory']) / 'structure' / name).exists():
+            path.unlink()
+    directory = meta['site_directory'] / 'structure'
+    if directory.is_dir() and not directory.is_symlink() and not any(directory.iterdir()):
+        directory.rmdir()
 
 
 def write_credits_and_todo(meta, selected, log):
@@ -394,8 +428,9 @@ def jinja_environment(meta, selected, built):
     # or in a page it includes, says which page (jinja_place)
     pages = FunctionLoader(lambda name: (templates[name], PAGE_TEMPLATE.format(name), lambda: True)
                            if name in templates else None)
+    # 'theme/...': the theme itself, where its templates are (not copied into the site)
     loader = ChoiceLoader([pages] + [FileSystemLoader(root) for root in roots]
-                         + [FileSystemLoader(dir_site)])
+                         + [PrefixLoader({'theme': FileSystemLoader(meta['theme'])}), FileSystemLoader(dir_site)])
     loader = TrackingLoader(loader, roots, marker_transform(meta))
     env = Environment(loader=loader, cache_size=0, extensions=['jinja_markdown.MarkdownExtension'])
     env.filters['markdown_page'] = markdown_page.convert         # the content of a Markdown page
@@ -946,6 +981,7 @@ def generate_site(meta, selected, built):
         raise BuildFailed(', '.join(f'{n} {what}' for n, what in ((len(failed), 'page(s) failed'),
                                                                  (plugin_failures, 'plugin error(s)')) if n))
     headings.save(meta)                 # the headings, for the next --only
+    save_structure(meta)                # the pages of the site, for the next --only
     if meta.get('dependency_store'):
         meta['dependency_store'].save(meta)
     return len(built)

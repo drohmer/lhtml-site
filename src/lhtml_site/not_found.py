@@ -12,7 +12,7 @@ nowhere from there, so this page is rendered with pathToRoot = base_url,
 its links starting at the root of the server.
 
 The page is not one of the pages of the site: not in the menu, the order
-of the pages, previous / next, structure/ or the search index. The theme
+of the pages, previous / next, the structure of the site or the search index. The theme
 knows it by `page.not_found` (it writes <meta name="robots" content="noindex">
 and leaves it out of the search). Its content is the template of the theme,
 or the page 404.md.j2 (404.html.j2 in LHTML) at the top of the sources,

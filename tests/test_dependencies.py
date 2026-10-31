@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 from lhtml_site import dependencies
 from lhtml_site.pages import Page, Source
+from lhtml_site.structure import state_path
 
 
 class Log:
@@ -41,12 +42,17 @@ def clear_cache(meta):
 
 
 def previous_site(meta, names):
-    """The structure a previous build left in the site: what a partial build
-    completes, and what BuildStore.expand() requires before keeping a page."""
-    structure = Path(meta['site_directory']) / 'structure'
-    structure.mkdir(exist_ok=True)
-    (structure / 'structure.json').write_text(
-        json.dumps([{'dir': '', 'filename': name} for name in names]))
+    """The structure a previous build recorded and the site it left: what a
+    partial build completes, and what BuildStore.expand() requires before
+    keeping a page."""
+    path = state_path(meta)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps([{'dir': '', 'filename': name} for name in names]))
+    site = Path(meta['site_directory'])
+    (site / 'theme').mkdir(exist_ok=True)
+    for name in names:
+        if not (site / name).exists():
+            (site / name).write_text('<p>previous</p>')
 
 
 def test_content_change_same_size_mtime_and_new_file(tmp_path):

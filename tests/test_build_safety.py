@@ -201,7 +201,9 @@ def test_nothing_private_of_the_project_reaches_the_site(tmp_path):
     assert 'PRIVATE_NOTE' not in text and 'PRIVATE_DIRECTORY' not in text
     assert not (site / 'a/project_link/configure.yaml').exists()
     assert not (site / 'a/project_link/deck.yaml').exists()
-    assert 'src' not in json.loads((site / 'structure/structure.json').read_text())[0]
+    assert not (site / 'structure').exists() and not (site / 'sitemap').exists()
+    assert not (site / 'theme/template').exists()           # read by the build where the theme is
+    assert 'src' not in json.loads((tmp_path / '.verification/structure.json').read_text())[0]
 
     config.write_text(yaml.safe_dump({'source_directory': 'src', 'public_page_keys': ['src']}))
     failed = build(config)
@@ -459,6 +461,7 @@ def test_the_sitemap_keeps_what_it_did_not_write(tmp_path):
     a page or a file of the project there stays."""
     config, source, site = _project(tmp_path, **{'sitemap/index.html.j2': '= Map\n',
                                                  'sitemap/extra.html': '<p>extra</p>\n'})
+    config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), 'publish_sitemap': True}))
     assert build(config).returncode == 0
     assert (site / 'sitemap/extra.html').is_file() and (site / 'sitemap/index.html').is_file()
     (source / 'b/index.html.j2').write_text('= Renamed b\n')
@@ -500,3 +503,55 @@ def test_strict_with_a_configuration_warning_still_diagnoses(tmp_path):
     assert result.returncode == 1 and 'nothing built' not in result.stdout, result.stdout
     result = build(config, '--strict')
     assert result.returncode == 1 and 'nothing built' in result.stdout and not site.exists()
+
+
+def test_the_files_of_the_generator_are_published_on_request(tmp_path):
+    """sitemap/ and structure/ reach the site only when the configuration
+    asks for them; the build keeps its own record in .verification/."""
+    config, source, site = _project(tmp_path)
+    assert build(config).returncode == 0
+    assert not (site / 'sitemap').exists() and not (site / 'structure').exists()
+    assert not (site / 'theme/template').exists() and (site / 'theme/js/navigation.js').is_file()
+    state = json.loads((tmp_path / '.verification/structure.json').read_text())
+    assert [entry['dir'] for entry in state] == ['a/', 'b/']
+    config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()),
+                                      'publish_sitemap': True, 'publish_structure': True}))
+    assert build(config).returncode == 0
+    assert json.loads((site / 'structure/structure.json').read_text()) == state
+    redirection = (site / 'sitemap/page_a.html').read_text()
+    assert '<meta name="robots" content="noindex">' in redirection and 'url=../a/index.html' in redirection
+
+
+def test_only_removes_what_a_previous_version_published(tmp_path):
+    """A site built by 1.0 held sitemap/ and structure/: a --only build
+    takes them away, and keeps the files of the project there."""
+    config, source, site = _project(tmp_path, **{'sitemap/extra.html': '<p>extra</p>\n'})
+    assert build(config).returncode == 0
+    (site / 'sitemap/page_a.html').write_text(
+        '<html><head><meta http-equiv="refresh" content="0; url=../a/index.html"></head></html>')
+    (site / 'structure').mkdir()
+    (site / 'structure/structure.json').write_text('[]')
+    (site / 'structure/structure.yaml').write_text('[]\n')
+    (site / 'theme/template').mkdir()
+    assert build(config, '--only', 'b').returncode == 0
+    assert not (site / 'sitemap/page_a.html').exists() and (site / 'sitemap/extra.html').is_file()
+    assert not (site / 'structure').exists() and not (site / 'theme/template').exists()
+
+
+def test_only_without_the_site_of_the_record_is_a_full_build(tmp_path):
+    """The record of the previous build is kept out of the site: a site
+    removed since is built again whole, not completed with one page."""
+    config, source, site = _project(tmp_path)
+    assert build(config).returncode == 0
+    shutil.rmtree(site)
+    result = build(config, '--only', 'b', '-v')
+    assert result.returncode == 0, result.stdout
+    assert (site / 'a/index.html').is_file() and (site / 'theme/js/navigation.js').is_file()
+
+
+@pytest.mark.parametrize('key', ['publish_sitemap', 'publish_structure'])
+def test_the_publish_options_are_booleans(tmp_path, key):
+    config, source, site = _project(tmp_path)
+    config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), key: 'yes'}))
+    result = build(config)
+    assert result.returncode != 0 and f"'{key}' must be a boolean" in result.stdout + result.stderr

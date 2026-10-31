@@ -103,13 +103,12 @@ def extract_titles(pages, macros=None):
     return sitemap
 
 
-def export_structure(pages, structure_path, public_keys=()):
-    """structure.yaml (and .json): one entry per page, in order, for the
-    plugins and the theme: its title, its place in the site (dir, filename,
-    template, level) and its origin (source, occurrence). The files written
-    into the site hold the public keys only (lhtml_site/structure.py); the entries
-    returned, which the build uses, also hold the settings of the page and
-    `src`, the path of its source."""
+def export_structure(pages, public_keys=()):
+    """One entry per page, in order, for the plugins and the theme: its
+    title, its place in the site (dir, filename, template, level) and its
+    origin (source, occurrence). Returns the entries the build uses, which
+    also hold the settings of the page and `src`, the path of its source,
+    and their public part (lhtml_site/structure.py), the one written down."""
     structure_to_export = []
     for page in pages:
         structure = {'title': page.title, **page.settings, 'math': page.math,
@@ -121,39 +120,51 @@ def export_structure(pages, structure_path, public_keys=()):
         if page.occurrence > 1:
             structure['occurrence'] = page.occurrence
         structure_to_export.append(structure)
-
-    os.makedirs(structure_path, exist_ok=True)
-
-    # Written into the site: the public part of each entry (lhtml_site/structure.py).
-    # The build keeps the whole entry, returned below.
     published = [public_entry(entry, public_keys) for entry in structure_to_export]
+    return structure_to_export, published
+
+
+def write_structure(published, structure_path):
+    """structure.yaml and structure.json in the site (publish_structure)."""
+    os.makedirs(structure_path, exist_ok=True)
     with open(structure_path / 'structure.yaml', 'w', encoding='utf-8', newline='\n') as fid:
         yaml.dump(published, fid)
     with open(structure_path / 'structure.json', 'w', encoding='utf-8', newline='\n') as fid:
         json.dump(published, fid, indent=4, default=str)
-    return structure_to_export
 
 
-REDIRECTION = '<html><head><meta http-equiv="refresh" content="0; url=../{}"></head></html>'
+REDIRECTION = ('<html><head><meta name="robots" content="noindex">'
+               '<meta http-equiv="refresh" content="0; url=../{}"></head></html>')
+# The redirections written before they said noindex: still removed as the build's own
+LEGACY_REDIRECTION = '<html><head><meta http-equiv="refresh" content="0; url=../{}"></head></html>'
 
 
 def export_sitemap(sitemap, dir_sitemap):
-    """A redirection per page, named after its title id. The redirections
-    of ids no page has any more (a title renamed, --only) are removed:
-    the files this function wrote, by their content, never a page or a
-    file of the project that the sitemap directory may hold."""
+    """A redirection per page, named after its title id (publish_sitemap).
+    The redirections of ids no page has any more (a title renamed, --only)
+    are removed (remove_sitemap)."""
+    remove_sitemap(dir_sitemap, keep={f'{id}.html' for id in sitemap})
     os.makedirs(dir_sitemap, exist_ok=True)
-    current = {f'{id}.html' for id in sitemap}
-    prefix, suffix = REDIRECTION.split('{}')
-    for name in os.listdir(dir_sitemap):
-        path = os.path.join(dir_sitemap, name)
-        if name.endswith('.html') and name not in current and os.path.isfile(path) \
-                and not os.path.islink(path) and os.path.getsize(path) < 4096:
-            with open(path, encoding='utf-8', errors='replace') as fid:
-                text = fid.read()
-            if text.startswith(prefix) and text.endswith(suffix):
-                os.remove(path)
-
     for id, page in sitemap.items():
         with open(dir_sitemap / f'{id}.html', 'w', encoding='utf-8', newline='\n') as fid:
             fid.write(REDIRECTION.format(page.site_html))
+
+
+def remove_sitemap(dir_sitemap, keep=()):
+    """Remove the redirections of sitemap/ but those named in `keep`: the
+    files this module wrote, by their content, never a page or a file of the
+    project that the sitemap directory may hold. The directory goes too when
+    nothing else is left in it."""
+    if not os.path.isdir(dir_sitemap) or os.path.islink(dir_sitemap):
+        return
+    for name in os.listdir(dir_sitemap):
+        path = os.path.join(dir_sitemap, name)
+        if name.endswith('.html') and name not in keep and os.path.isfile(path) \
+                and not os.path.islink(path) and os.path.getsize(path) < 4096:
+            with open(path, encoding='utf-8', errors='replace') as fid:
+                text = fid.read()
+            if any(text.startswith(prefix) and text.endswith(suffix)
+                   for prefix, suffix in (r.split('{}') for r in (REDIRECTION, LEGACY_REDIRECTION))):
+                os.remove(path)
+    if not os.listdir(dir_sitemap):
+        os.rmdir(dir_sitemap)

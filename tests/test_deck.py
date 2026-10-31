@@ -143,7 +143,7 @@ class DeckGenerationTests(unittest.TestCase):
         result = subprocess.run([sys.executable, str(REPO / 'generate.py'), '-i', str(self.config), *args],
                                 capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        return [e['dir'] for e in yaml.safe_load((self.site / 'structure/structure.yaml').read_text())]
+        return [e['dir'] for e in yaml.safe_load((self.config.parent / '.verification/structure.json').read_text())]
 
     def page_id(self, name):
         html = (self.site / name / 'index.html').read_text()
@@ -221,7 +221,7 @@ class DeckProjectsTests(unittest.TestCase):
             return result.stdout + result.stderr
         self.assertEqual(result.returncode == 0, ok, result.stdout + result.stderr)
         if ok:
-            return yaml.safe_load((self.site / 'structure/structure.yaml').read_text())
+            return yaml.safe_load((self.config.parent / '.verification/structure.json').read_text())
         return ' '.join((result.stdout + result.stderr).split())     # independent of the terminal width
 
     DECK = {'sources': {'course': '../course/src'},
@@ -351,7 +351,7 @@ class DeckBuildRegressionTests(DeckProjectsTests):
         result = subprocess.run([sys.executable, str(REPO / 'generate.py'), '-i', str(self.config),
                                  '--deck', 'short.yaml'], capture_output=True, text=True, cwd=str(REPO))
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        structure = yaml.safe_load((self.site / 'structure/structure.yaml').read_text())
+        structure = yaml.safe_load((self.config.parent / '.verification/structure.json').read_text())
         self.assertEqual([e['dir'] for e in structure], ['01_a/'])
 
     def test_empty_deck_warns(self):

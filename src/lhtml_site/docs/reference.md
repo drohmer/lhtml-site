@@ -75,11 +75,12 @@ lhtml-site --only 02_rotations --only inf585:04_interpolation_position/content/0
 `--only` takes pointers written as in a deck (directory, file, glob,
 `name:path`; all the occurrences of a repeated slide) and generates only
 these pages, in the site itself: their template, the files of their
-directory (assets), the menu, the sitemap and the structure of the site; the
+directory (assets), the menu and the structure of the site; the
 other pages are those of the previous build. Their numbering, their links
 (`pathTo_*`) and the ids of the titles are those of a full build. A page that
 fails keeps its previous version (put back at the end of the build, as it
-was), and the build reports the failure. When there is no previous build, or when
+was), and the build reports the failure. When there is no previous build (its
+record, `.verification/structure.json`, or its site missing), or when
 the pages of the site changed (deck, new, renamed or removed page), a full
 build is done instead; with `--layout`, it still measures only the pages
 named (and those without a report, or whose report was made from another
@@ -101,10 +102,20 @@ plugin: []                             # Extensions, in order (none by default)
 options, ready to uncomment (the file is `src/lhtml_site/configure_example.yaml`).
 
 **The site is published; the documents of a project are not.** The site
-holds the pages, the assets, the theme and `structure/structure.{json,yaml}`
-(the pages of the site, read by the plugins and by `--only`, with the keys a
-theme may display: a `notes:` or a `message:` written by the author stays out
-of it, as does the path of the sources). What is written for the author and
+holds the pages, the assets and the theme, without its Jinja templates
+(`template/` of the theme: the build reads them in the theme, the server
+would serve them as text). The build keeps the pages of the site in
+`.verification/structure.json` (`.verification/<deck>/<target>/` in a
+project of several), for `--only` and the plugins, with the keys a theme may
+display: a `notes:` or a `message:` written by the author stays out of it,
+as does the path of the sources. Two files of the generator go into the site
+only when the configuration asks for them: `publish_structure: true` writes
+that list into `structure/structure.{json,yaml}` of the site (a custom theme
+or plugin that reads it there), `publish_sitemap: true` writes `sitemap/`, a
+redirection per page named after its title id (`sitemap/introduction.html`,
+marked `noindex` for the search engines), a stable address for a link from
+elsewhere. The site of an earlier version held both: a `--only` build
+removes them, a full build writes a site without them. What is written for the author and
 their agent goes to `.structure/`, next to the configuration: `agents.md`
 (the procedure), `design.md` (the macros and tokens of the design),
 `credits.md` (the origin of the pages and the credits of the images) and
@@ -140,6 +151,8 @@ Optional keys:
 | `layout` | Options of the layout analysis (`--layout`): content root, viewport, thresholds, output directory, design rules (see [Layout Report](#layout-report-llm-assisted-slide-layout)). Unrelated to the `layout` of a page, which chooses its arrangement |
 | `chrome` | Chrome executable run by the PDF export, the layout report and `--render`, instead of the Chromium of Playwright; a macOS `.app` bundle is accepted |
 | `title_id` | Give the headings IDs, a stage of the build (`lhtml_site/headings.py`; default: true) |
+| `publish_sitemap` | Write `sitemap/` into the site: a redirection per page, named after its title id, marked `noindex` (default: false) |
+| `publish_structure` | Write the pages of the site into `structure/structure.{json,yaml}` of the site, for a custom theme or plugin that reads them there (default: false; the build keeps its record in `.verification/structure.json`) |
 | `deck` | Order of the pages: path of a deck file, or mapping/list of slides (see [Deck](#deck-order-of-the-slides)); without deck, the order of the files |
 | `design` | Tokens, macros and layouts overriding the theme's `design.yaml` (mapping, or path of a YAML file; see [Design](#design-tokens-macros-and-layouts)) |
 | `decks` | `directories`: each directory of the sources is a deck, built as a site of its own (see [Decks and targets](#decks-and-targets)) |
@@ -270,7 +283,8 @@ Each page is rendered by Jinja2 with:
 
 `{% extends %}`, `{% include %}` and `{% import %}` read the templates of the
 project (relative to its source directory), then of the other projects of the
-deck, then of the site (`theme/template/base.html`).
+deck, then of the theme (`theme/template/base.html` is `template/base.html`
+of the theme), then of the site.
 
 ## Themes
 
@@ -483,7 +497,8 @@ layout:                                # what the layout analysis reads
 not_found: 'theme/template/404.html'   # the content of 404.html (with base_url)
 ```
 
-`not_found:` names, in the site, the template of the content of `404.html`:
+`not_found:` names the template of the content of `404.html`, as `theme/`
+followed by its path in the theme:
 the build writes that page at the root of the site when the configuration
 sets `base_url` (see [Configuration](#configuration)), out of the menu, of
 previous / next and of the search index; a page `src/404.md.j2` (or

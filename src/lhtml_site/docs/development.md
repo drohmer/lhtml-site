@@ -42,7 +42,7 @@ lhtml-site/
     credits.py             # Credits, origin of the slides, planned figures (.structure/credits.md, todo.md)
     figures.py             # Figures made from code (*.svg.py, *.svg.tex)
     filesystem.py          # File/directory utilities
-    generator_tool.py      # Metadata extraction, sitemap generation
+    generator_tool.py      # Metadata extraction, structure and sitemap of the site
     logger.py              # Console output (rich)
     layout_options.py      # Options of the layout report, checked by --check-config
     layout/

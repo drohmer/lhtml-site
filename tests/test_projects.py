@@ -55,6 +55,8 @@ class ProjectBuildTests(DeckProjectsTests):
     def test_scaffold_escapes_the_metadata(self):
         slides = [{'path': '02_new', 'title': 'New {{ one }}\nsecond line',
                    'notes': 'demo {% if %} later', 'hint': 'use {{ x }}'}]
+        config = yaml.safe_load(self.config.read_text())
+        self.config.write_text(yaml.safe_dump({**config, 'publish_sitemap': True}))
         self.build({'slides': slides}, '--scaffold')
         html = (self.site / '02_new/index.html').read_text()
         self.assertIn('New {{ one }}', html)

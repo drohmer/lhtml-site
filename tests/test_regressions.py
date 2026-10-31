@@ -67,6 +67,8 @@ class GeneratorRegressions(unittest.TestCase):
         self.assertEqual((self.site / 'index.html').read_text(), '<h1>Static homepage</h1>')
 
     def test_only_after_add_rename_remove_is_a_full_build(self):
+        config = yaml.safe_load(self.config.read_text())
+        self.config.write_text(yaml.safe_dump({**config, 'publish_sitemap': True}))
         self.page('a/index.html.j2', 'First')
         (self.source / 'asset.txt').write_text('original asset')
         self.build('-d')
@@ -77,7 +79,7 @@ class GeneratorRegressions(unittest.TestCase):
         menu = (self.site / 'theme/js/menu.js').read_text()
         self.assertIn('b/index.html', menu)
         self.assertTrue((self.site / 'sitemap/second.html').exists())
-        structure = yaml.safe_load((self.site / 'structure/structure.yaml').read_text())
+        structure = json.loads((self.root / '.verification/structure.json').read_text())
         self.assertEqual(structure[1]['title'], 'Second')       # the new page was read by this build
         self.assertNotIn('custom', structure[1])                # its settings stay out of the site
         self.assertEqual((self.site / 'asset.txt').read_text(), 'changed asset')

@@ -76,9 +76,9 @@ def test_the_404_page_links_from_the_base_url(project):
     assert re.findall(r'<li><a href="([^"]*)">([^<]*)</a></li>', html) == [
         ('/docs/index.html', 'Home'), ('/docs/01_start/index.html', 'Get started'),
         ('/docs/02_guides/01_write/index.html', 'Guides'), ('/docs/03_reference/01_settings/index.html', 'Reference')]
-    # out of the menu, the order of the pages and structure/
+    # out of the menu, the order of the pages and their structure
     assert all(entry['path'] != '404.html' for entry in toc_of(site))
-    structure = json.loads((site / 'structure/structure.json').read_text(encoding='utf-8'))
+    structure = json.loads((project / '.verification/structure.json').read_text(encoding='utf-8'))
     assert all(entry['filename'] != '404.html' or entry['dir'] for entry in structure)
     # the other pages keep their relative links
     page = (site / '01_start/01_install/index.html').read_text(encoding='utf-8')

@@ -113,6 +113,7 @@ class OnlyTests(DeckProjectsTests):
         # A site built by 1.0: its record was in the site, read once by --only
         legacy = {page: headings for page, headings in json.loads(self.headings.read_text()).items()}
         self.headings.unlink()
+        (self.site / 'structure').mkdir()
         (self.site / 'structure/title_id.json').write_text(json.dumps(legacy))
         self.build({'slides': ['00_plan', '01_a']}, '--only', '01_a')
         self.assertIn('id="same_id2_l2"', (self.site / '01_a/index.html').read_text())

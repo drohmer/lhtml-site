@@ -73,6 +73,14 @@ theme: 'webpage-frame'
 # lines of a paragraph are joined).
 # line-breaks: false
 
+# Files of the generator written into the site, for those who read them
+# there. sitemap/: a redirection per page, named after its title
+# (sitemap/introduction.html), a stable address for a link from elsewhere.
+# structure/: the list of the pages, for a custom theme or plugin. Default:
+# false (the build keeps its own record in .verification/).
+# publish_sitemap: false
+# publish_structure: false
+
 # ---------------------------------------------------------------------------
 # Several decks, in the browser and as a PDF
 # ---------------------------------------------------------------------------

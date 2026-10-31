@@ -1,7 +1,7 @@
 """The pages of the site, for the plugins.
 
-The generator gives the structure of the site (one entry per page, in order,
-as written in structure/structure.yaml) in meta['structure'], and the pages
+The generator gives the structure of the site (one entry per page, in order)
+in meta['structure'], and the pages
 it generates in meta['built']: all of them, or those named by --only (the
 other pages of the site are those of the previous build). A plugin working
 on the pages (templates, HTML) uses built_pages; one writing a file for the
@@ -9,19 +9,23 @@ whole site (menu, redirection) uses structure.
 
 Two levels of detail. In meta, an entry holds everything the build knows
 about a page, including the settings its author wrote for themselves and the
-absolute path of its source. Written into the site, an entry holds only
-PUBLIC_KEYS: structure/ is served with the site, so what a reader must not
-see does not go there.
+absolute path of its source. Written down, an entry holds only PUBLIC_KEYS:
+in .verification/<scope>/structure.json, the build state the next --only
+reads (STATE, not published), and in structure/ of the site only when the
+configuration asks for it (publish_structure: a custom theme or plugin that
+reads it there), as structure/ is served with the site.
 """
 
 from pathlib import Path
 import json
-import os
 
 # The documents written for the author and their agent (agents.md,
 # design.md, credits.md, todo.md) go next to the configuration, not into
 # the site: the site is published, and they are working documents.
 DOCUMENTS = '.structure/'
+# The structure of the last build that succeeded, under .verification/<scope>/
+# next to the dependency store: what --only completes (lhtml_site/dependencies.py)
+STATE = 'structure.json'
 
 # What may be written into the site for each page: what places it (dir,
 # filename, template, level, occurrence), what names it (title, source), and
@@ -61,16 +65,32 @@ def page_path(entry):
     return entry['dir'] + entry['filename']
 
 
-def load_structure(site_directory):
-    """The structure exported in a site directory (structure.json)."""
-    with open(os.path.join(site_directory, 'structure', 'structure.json'), encoding='utf-8') as fid:
+def state_path(meta):
+    """The structure of the previous build (build state, not published)."""
+    return Path(meta.get('config_directory') or '.') / '.verification' / (meta.get('build_scope') or '') / STATE
+
+
+def load_structure(meta):
+    """The structure recorded by the previous build (STATE)."""
+    with open(state_path(meta), encoding='utf-8') as fid:
         return json.load(fid)
+
+
+def save(meta):
+    """Record the structure of a build that succeeded, for the next --only
+    (a failed build leaves the previous site, and its record, in place)."""
+    if meta.get('structure_state') is None:
+        return
+    path = state_path(meta)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w', encoding='utf-8', newline='\n') as fid:
+        json.dump(meta['structure_state'], fid, indent=4, default=str, ensure_ascii=False)
 
 
 def structure(meta):
     """All the pages of the site, in order."""
     if 'structure' not in meta:
-        meta['structure'] = load_structure(meta['site_directory'])
+        meta['structure'] = load_structure(meta)
     return meta['structure']
 
 

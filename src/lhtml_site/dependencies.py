@@ -13,7 +13,7 @@ import os
 
 from lhtml_site import design
 from lhtml_site.pages import is_template
-from lhtml_site.structure import load_structure, page_path
+from lhtml_site.structure import load_structure, page_path, state_path
 
 SCHEMA = 1
 
@@ -264,14 +264,18 @@ class BuildStore:
         previous build is what a partial build completes: without it, or
         when it holds other pages than this build produces, nothing can be
         kept."""
-        if not (Path(meta['site_directory']) / 'structure/structure.json').is_file():
+        if not state_path(meta).is_file():
             return 'no previous build'
         try:
-            names = [page_path(entry) for entry in load_structure(meta['site_directory'])]
-        except (OSError, ValueError):
+            names = [page_path(entry) for entry in load_structure(meta)]
+        except (OSError, ValueError, TypeError, KeyError):
             return 'the structure of the previous build cannot be read'
         if names != [page.site_html for page in selected]:
             return 'the pages of the site changed'
+        # the record is kept out of the site: the site itself must still be there
+        site = Path(meta['site_directory'])
+        if not (site / 'theme').is_dir() or not all((site / name).is_file() for name in names):
+            return 'the site of the previous build is incomplete'
         if self.sources_unrecorded:     # a file deleted before this build would stay
             return 'the source files of the previous build are not recorded'
         if self.sources:                # a partial build adds files, it never removes one

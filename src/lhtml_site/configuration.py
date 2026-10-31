@@ -35,6 +35,7 @@ RUNTIME_KEYS = frozenset((
     'exported',                     # the file an export wrote (lhtml_site/pdf_export.py)
     'only',                         # --only: the build is made in the site, for some pages
     'structure', 'built',           # all the pages of the site / those generated (lhtml_site/structure.py)
+    'structure_state',              # the public part of 'structure', recorded for the next --only
     'previous_pages',               # --only: HTML of the pages before the build (restored if they fail)
     'strict',                       # --strict: the check of the warnings, before the pages are kept
     'loaded_design', 'macros',      # the design (lhtml_site/design.py) and its macros for LHTML
@@ -84,6 +85,11 @@ class Config:
     # bundled themes display (lhtml_site/structure.py, PUBLIC_KEYS). Everything else
     # an author writes in a config.yaml or a deck entry stays out of the site.
     public_page_keys: list[str] = field(default_factory=list)
+    # Files of the generator written into the site on request: sitemap/, a
+    # redirection per title id, and structure/, the pages of the site for a
+    # custom theme or plugin that reads them there (lhtml_site/structure.py)
+    publish_sitemap: bool = False
+    publish_structure: bool = False
     plugin_arg: dict = field(default_factory=dict)
     layout: dict = field(default_factory=dict)      # options of the layout analysis (--layout)
     # The formulas: rendered at build or in the browser, and the macros of
@@ -285,7 +291,7 @@ def load_config(filename, debug_override=None):
         warnings.append(f"Unknown configuration key '{key}', ignored.{hint} "
                         f"(A plugin reads its options in 'plugin_arg'.)")
     values = {**defaults, **{k: v for k, v in data.items() if k in known}}
-    for key in ('debug', 'title_id', 'use_tidy', 'line_breaks'):
+    for key in ('debug', 'title_id', 'use_tidy', 'line_breaks', 'publish_sitemap', 'publish_structure'):
         if type(values[key]) is not bool:
             raise ConfigError(f"'{key}' must be a boolean (true or false)")
     for key in ('keywords', 'plugin_arg', 'layout'):
