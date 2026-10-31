@@ -70,21 +70,33 @@ def state_path(meta):
     return Path(meta.get('config_directory') or '.') / '.verification' / (meta.get('build_scope') or '') / STATE
 
 
+def load_record(meta):
+    """The record of the previous build (STATE): {'site': the directory it
+    published, 'pages': its structure}."""
+    with open(state_path(meta), encoding='utf-8') as fid:
+        record = json.load(fid)
+    if not isinstance(record, dict) or not isinstance(record.get('pages'), list):
+        raise ValueError(f'{state_path(meta)}: not a record of the pages of a site')
+    return record
+
+
 def load_structure(meta):
     """The structure recorded by the previous build (STATE)."""
-    with open(state_path(meta), encoding='utf-8') as fid:
-        return json.load(fid)
+    return load_record(meta)['pages']
 
 
 def save(meta):
-    """Record the structure of a build that succeeded, for the next --only
-    (a failed build leaves the previous site, and its record, in place)."""
+    """Record the structure of a build once its site is published, for the
+    next --only (a failed build leaves the previous site, and its record, in
+    place). The record names the site: it is kept out of it, and the
+    configuration of another site may share the directory of this one."""
     if meta.get('structure_state') is None:
         return
     path = state_path(meta)
     path.parent.mkdir(parents=True, exist_ok=True)
+    record = {'site': str(Path(meta['site_directory']).resolve()), 'pages': meta['structure_state']}
     with open(path, 'w', encoding='utf-8', newline='\n') as fid:
-        json.dump(meta['structure_state'], fid, indent=4, default=str, ensure_ascii=False)
+        json.dump(record, fid, indent=4, default=str, ensure_ascii=False)
 
 
 def structure(meta):

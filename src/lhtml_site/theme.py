@@ -26,6 +26,10 @@ The manifest:
     not_found: 'theme/template/404.html'   # the content of 404.html, the page shown
                                            # for any missing URL (lhtml_site/not_found.py)
 
+`template` and `not_found` are named as `theme/` followed by their path in
+the theme: the build reads them there, and neither they, their directory nor
+this file is copied into the site (lhtml_site/generate.py, theme_build_files).
+
 A theme with no `toc:` has no menu, and the build writes none. That is how
 a theme says so - not a switch in a project's configuration, which has no
 way of knowing.
@@ -89,7 +93,7 @@ def validate(given, file):
     not_found = given.get('not_found')
     if not_found is not None and (not isinstance(not_found, str) or not not_found.strip()):
         raise ConfigError(f'{file}: not_found must name the template of the content of 404.html, '
-                          f'in the site (theme/template/404.html), or be absent')
+                          f'as theme/ and its path in the theme (theme/template/404.html), or be absent')
     toc = given.get('toc')
     if toc is not None:
         if not isinstance(toc, dict) or set(toc) - set(TOC_KEYS):

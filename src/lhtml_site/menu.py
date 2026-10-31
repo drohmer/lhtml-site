@@ -22,8 +22,8 @@ from lhtml_site.theme import of as theme_manifest
 PLACEHOLDER = '{{TOC}}'
 
 # The menu is published in the site and read by anyone: only the keys the
-# themes display are written (lhtml_site/structure.py, the same list the site's
-# structure/ is filtered with), never every setting of a page.
+# themes display are written (lhtml_site/structure.py, the same list the
+# structure of the site is filtered with), never every setting of a page.
 # 'path' is built below; 'children' and 'parent' are built by the theme's JS.
 MENU_KEYS = DISPLAY_KEYS
 

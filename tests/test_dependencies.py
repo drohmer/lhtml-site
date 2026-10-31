@@ -47,8 +47,9 @@ def previous_site(meta, names):
     keeping a page."""
     path = state_path(meta)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps([{'dir': '', 'filename': name} for name in names]))
     site = Path(meta['site_directory'])
+    path.write_text(json.dumps({'site': str(site.resolve()),
+                                'pages': [{'dir': '', 'filename': name} for name in names]}))
     (site / 'theme').mkdir(exist_ok=True)
     for name in names:
         if not (site / name).exists():
@@ -136,6 +137,8 @@ def test_a_partial_build_needs_the_site_of_the_previous_one(tmp_path):
     assert store.partial_impossible(meta, [a]) == 'the pages of the site changed'
     assert store.expand(meta, [a], [a]) is None
 
-    previous_site(meta, ['a.html'])
+    previous_site(meta, ['a.html'])         # the site still holds the page gone since
+    assert store.partial_impossible(meta, [a]).startswith('the site holds a page')
+    (Path(meta['site_directory']) / 'gone.html').unlink()
     assert store.partial_impossible(meta, [a]) is None
     assert store.expand(meta, [a], [a]) == [a]

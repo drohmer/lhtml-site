@@ -231,9 +231,23 @@ def other_sources(selected):
 
 # Guide of the procedure for AI agents, copied into each project (.structure/agents.md)
 AGENTS_GUIDE = GENERATOR_DIRECTORY / 'docs' / 'agents.md'
-# The directory of the Jinja templates of a theme (theme.yaml: template, not_found),
-# read where it is and not copied into the site
+# The files of a theme that only the build reads, where they are: its Jinja
+# templates (template/, and the directories theme.yaml names for template
+# and not_found) and its declarations (theme.yaml, design.yaml)
 THEME_TEMPLATES = 'template'
+THEME_DECLARATIONS = (theme.MANIFEST, design.DESIGN_FILE)
+
+
+def theme_build_files(meta):
+    """The files and directories of the theme the site does not get, relative to it."""
+    found = {THEME_TEMPLATES, *THEME_DECLARATIONS}
+    manifest = theme.of(meta)
+    for key in ('template', 'not_found'):
+        name = manifest.get(key)
+        if name and name.startswith('theme/') and '..' not in Path(name).parts:
+            parent = Path(name[len('theme/'):]).parent
+            found.add(parent.as_posix() if parent.parts else name[len('theme/'):])
+    return sorted(found)
 
 
 def prepare_data(meta, selected, built, log):
@@ -256,15 +270,20 @@ def prepare_data(meta, selected, built, log):
             exclude=[meta.get('published_site_directory'), meta.get('config_file'),
                      meta['deck'] if isinstance(meta.get('deck'), str) else None,
                      str(documents_directory(meta))])
-        # The theme, but its Jinja templates: the build reads them in the
-        # theme (jinja_environment), and the site would serve them as text
+        # The theme, but what only the build reads: it reads its templates
+        # in the theme (jinja_environment), and the site would serve them as text
         log.debug(f"Copy theme '{meta['theme']}' -> '{dir_site / 'theme'}'")
         warnings += filesystem.copy_directories(meta['theme'], dir_site / 'theme/',
-                                                exclude=[Path(meta['theme']) / THEME_TEMPLATES])
-    else:           # the templates a previous version copied with the theme (the build reads them in the theme)
-        templates = dir_site / 'theme' / THEME_TEMPLATES
-        if templates.is_dir() and not templates.is_symlink():
-            shutil.rmtree(templates)
+                                                exclude=[Path(meta['theme']) / name for name in theme_build_files(meta)])
+    else:           # what a previous version copied with the theme
+        for name in theme_build_files(meta):
+            path = dir_site / 'theme' / name
+            if path.is_symlink() or not path.exists():
+                continue
+            if path.is_dir():
+                shutil.rmtree(path)
+            else:
+                path.unlink()
     if only:        # a page that fails keeps its previous version
         meta['previous_pages'] = {}
         for page in built:
@@ -431,7 +450,7 @@ def jinja_environment(meta, selected, built):
     # 'theme/...': the theme itself, where its templates are (not copied into the site)
     loader = ChoiceLoader([pages] + [FileSystemLoader(root) for root in roots]
                          + [PrefixLoader({'theme': FileSystemLoader(meta['theme'])}), FileSystemLoader(dir_site)])
-    loader = TrackingLoader(loader, roots, marker_transform(meta))
+    loader = TrackingLoader(loader, roots, marker_transform(meta), unmarked=[meta['theme']])
     env = Environment(loader=loader, cache_size=0, extensions=['jinja_markdown.MarkdownExtension'])
     env.filters['markdown_page'] = markdown_page.convert         # the content of a Markdown page
     env.filters[headings.JINJA_FILTER] = headings.jinja_filter(meta)   # the id of a heading rendered by Jinja
@@ -836,6 +855,7 @@ def build_site(args, build, config_file, log):
         else:
             with staged_site(meta):
                 count = generate_site(meta, selected, selected)
+        save_structure(meta)        # the pages of the site, once it is published: for the next --only
     except Exception as exc:
         kept = '' if built is not None else ' (previous site kept)'
         log.error(f"{build.label + ': ' if build.label else ''}build failed{kept}: {exc}")
@@ -981,7 +1001,6 @@ def generate_site(meta, selected, built):
         raise BuildFailed(', '.join(f'{n} {what}' for n, what in ((len(failed), 'page(s) failed'),
                                                                  (plugin_failures, 'plugin error(s)')) if n))
     headings.save(meta)                 # the headings, for the next --only
-    save_structure(meta)                # the pages of the site, for the next --only
     if meta.get('dependency_store'):
         meta['dependency_store'].save(meta)
     return len(built)

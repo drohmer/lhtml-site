@@ -14,11 +14,12 @@ class TrackingLoader(BaseLoader):
     templates of the project only. The pages are marked before the build
     writes them into the site; what they include is read here, and is marked
     here, so its blocks name the file they are written in instead of taking
-    a line of the page. The theme's templates are not under a source root
-    and stay unmarked."""
-    def __init__(self, loader, source_roots, mark=None):
+    a line of the page. The theme's templates stay unmarked (`unmarked`: a
+    theme may be inside the sources)."""
+    def __init__(self, loader, source_roots, mark=None, unmarked=()):
         self.loader = loader
         self.roots = [Path(root).resolve() for root in source_roots]
+        self.unmarked = [Path(root).resolve() for root in unmarked]
         self.used = set()
         self.mark = mark
 
@@ -29,6 +30,7 @@ class TrackingLoader(BaseLoader):
             self.used.add(str(path))
             # Markers are LHTML's: a Markdown file keeps its text (lhtml_site/markdown_page.py)
             if (self.mark and not path.name.endswith(('.md', '.md.j2'))
-                    and any(path.is_relative_to(root) for root in self.roots)):
+                    and any(path.is_relative_to(root) for root in self.roots)
+                    and not any(path.is_relative_to(root) for root in self.unmarked)):
                 text = self.mark(text, str(path))
         return text, filename, uptodate

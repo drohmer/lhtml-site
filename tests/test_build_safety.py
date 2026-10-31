@@ -203,7 +203,7 @@ def test_nothing_private_of_the_project_reaches_the_site(tmp_path):
     assert not (site / 'a/project_link/deck.yaml').exists()
     assert not (site / 'structure').exists() and not (site / 'sitemap').exists()
     assert not (site / 'theme/template').exists()           # read by the build where the theme is
-    assert 'src' not in json.loads((tmp_path / '.verification/structure.json').read_text())[0]
+    assert 'src' not in json.loads((tmp_path / '.verification/structure.json').read_text())['pages'][0]
 
     config.write_text(yaml.safe_dump({'source_directory': 'src', 'public_page_keys': ['src']}))
     failed = build(config)
@@ -512,8 +512,9 @@ def test_the_files_of_the_generator_are_published_on_request(tmp_path):
     assert build(config).returncode == 0
     assert not (site / 'sitemap').exists() and not (site / 'structure').exists()
     assert not (site / 'theme/template').exists() and (site / 'theme/js/navigation.js').is_file()
-    state = json.loads((tmp_path / '.verification/structure.json').read_text())
-    assert [entry['dir'] for entry in state] == ['a/', 'b/']
+    record = json.loads((tmp_path / '.verification/structure.json').read_text())
+    state = record['pages']
+    assert [entry['dir'] for entry in state] == ['a/', 'b/'] and record['site'] == str(site.resolve())
     config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()),
                                       'publish_sitemap': True, 'publish_structure': True}))
     assert build(config).returncode == 0
@@ -555,3 +556,89 @@ def test_the_publish_options_are_booleans(tmp_path, key):
     config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), key: 'yes'}))
     result = build(config)
     assert result.returncode != 0 and f"'{key}' must be a boolean" in result.stdout + result.stderr
+
+
+def _only_is_partial(config, pointer):
+    result = build(config, '--only', pointer, '-v')
+    assert result.returncode == 0, result.stdout
+    return '--only:' not in result.stdout or 'full build' not in result.stdout
+
+
+def test_only_completes_the_site_of_its_record(tmp_path):
+    """The record is kept out of the site, in a directory another
+    configuration may share: --only completes only the site it describes,
+    as that build left it."""
+    config, source, site = _project(tmp_path, **{'c/index.html.j2': '= Page c\n'})
+    other = tmp_path / 'other.yaml'
+    other.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), 'site_directory': 'site-b'}))
+    assert build(config).returncode == 0 and build(other).returncode == 0
+    shutil.rmtree(source / 'c')
+    assert build(config).returncode == 0
+    (source / 'b/index.html.j2').write_text('= Page b v2\n')
+    assert not _only_is_partial(other, 'b')                 # the record is the one of site/
+    assert not (tmp_path / 'site-b/c').exists()
+
+    shutil.copytree(tmp_path / 'site-b/a', site / 'c')      # a page put back by hand
+    assert not _only_is_partial(config, 'b')
+    assert not (site / 'c').exists()
+    assert _only_is_partial(config, 'b')                    # the site of its record: completed
+
+
+def test_the_record_waits_for_the_site_to_be_published(tmp_path):
+    """A build whose site could not be published leaves the previous site,
+    and the record of that site."""
+    config, source, site = _project(tmp_path)
+    assert build(config).returncode == 0
+    record = (tmp_path / '.verification/structure.json').read_text()
+    (source / 'b/index.html.j2').unlink()
+    script = tmp_path / 'fail.py'
+    script.write_text(
+        'import sys, pathlib\n'
+        'rename = pathlib.Path.rename\n'
+        'def failing(self, target):\n'
+        '    if self.name.startswith(".site-build-"):\n'
+        '        raise OSError("held open")\n'
+        '    return rename(self, target)\n'
+        'pathlib.Path.rename = failing\n'
+        f'sys.argv = ["generate.py", "-i", {str(config)!r}]\n'
+        'from lhtml_site.generate import main\n'
+        'sys.exit(main())\n')
+    result = subprocess.run([sys.executable, str(script)], capture_output=True, text=True)
+    assert result.returncode != 0 and (site / 'b/index.html').is_file(), result.stdout + result.stderr
+    assert (tmp_path / '.verification/structure.json').read_text() == record
+
+
+def test_a_theme_in_the_sources_stays_unmarked(tmp_path):
+    """A theme may be inside the sources: the source map marks the pages,
+    not the templates of the theme."""
+    from jinja2 import Environment, FileSystemLoader
+    from lhtml_site.tracking import TrackingLoader
+    source = tmp_path / 'src'
+    (source / '_theme/template').mkdir(parents=True)
+    (source / '_theme/template/base.html').write_text('{% block content %}{% endblock %}')
+    (source / 'a').mkdir()
+    (source / 'a/inc.html').write_text('included')
+    marked = []
+    loader = TrackingLoader(FileSystemLoader(source), [source], lambda text, path: marked.append(path) or text,
+                            unmarked=[source / '_theme'])
+    env = Environment(loader=loader)
+    env.get_template('_theme/template/base.html')
+    env.get_template('a/inc.html')
+    assert marked == [str((source / 'a/inc.html').resolve())]
+
+
+def test_a_theme_keeps_out_of_the_site_what_only_the_build_reads(tmp_path):
+    """The templates a theme.yaml names elsewhere than template/, and
+    theme.yaml and design.yaml, are read in the theme."""
+    config, source, site = _project(tmp_path)
+    theme = tmp_path / 'mytheme'
+    shutil.copytree(REPO / 'src/lhtml_site/themes/slides', theme)
+    (theme / 'template').rename(theme / 'layouts')
+    manifest = theme / 'theme.yaml'
+    manifest.write_text(manifest.read_text().replace("'theme/template/", "'theme/layouts/"))
+    config.write_text(yaml.safe_dump({**yaml.safe_load(config.read_text()), 'theme': str(theme)}))
+    result = build(config)
+    assert result.returncode == 0, result.stdout
+    assert (site / 'a/index.html').is_file() and (site / 'theme/js/navigation.js').is_file()
+    for name in ('layouts', 'template', 'theme.yaml', 'design.yaml'):
+        assert not (site / 'theme' / name).exists(), name

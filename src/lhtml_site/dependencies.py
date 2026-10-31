@@ -13,7 +13,7 @@ import os
 
 from lhtml_site import design
 from lhtml_site.pages import is_template
-from lhtml_site.structure import load_structure, page_path, state_path
+from lhtml_site.structure import load_record, page_path, state_path
 
 SCHEMA = 1
 
@@ -245,6 +245,25 @@ def freshness(manifest, meta, entry):
             'external_resources_untracked': manifest.get('external_resources', [])}
 
 
+# Pages of the site that are no page of the structure nor a file of the
+# sources, and the build writes all the same (lhtml_site/index_page.py, not_found.py)
+GENERATED_PAGES = ('index.html', '404.html')
+
+
+def stray_page(site, names, sources):
+    """A page of the site (.html) that is no page of the record, no file of
+    the sources and nothing the build writes: the site is not the one the
+    record describes (a page removed since, a site put back by hand). None
+    if there is none."""
+    known = set(names) | set(sources) | set(GENERATED_PAGES)
+    for path in sorted(site.rglob('*.html')):
+        relative = path.relative_to(site).as_posix()
+        if relative.split('/')[0] in ('theme', 'sitemap') or relative in known:
+            continue
+        return relative
+    return None
+
+
 class BuildStore:
     def __init__(self, meta):
         self.path = Path(meta['config_directory']) / '.verification' / (meta.get('build_scope') or '') / 'builds.json'
@@ -267,15 +286,23 @@ class BuildStore:
         if not state_path(meta).is_file():
             return 'no previous build'
         try:
-            names = [page_path(entry) for entry in load_structure(meta)]
+            record = load_record(meta)
+            names = [page_path(entry) for entry in record['pages']]
         except (OSError, ValueError, TypeError, KeyError):
             return 'the structure of the previous build cannot be read'
         if names != [page.site_html for page in selected]:
             return 'the pages of the site changed'
-        # the record is kept out of the site: the site itself must still be there
+        # The record is kept out of the site: it must be the record of this
+        # site, which must still be the one it describes
         site = Path(meta['site_directory'])
+        if record.get('site') != str(site.resolve()):
+            return 'the previous build made another site'
         if not (site / 'theme').is_dir() or not all((site / name).is_file() for name in names):
-            return 'the site of the previous build is incomplete'
+            return 'the site of the previous build is missing or incomplete'
+        sources = source_files(meta) + [f'{name}/{path}' for name, root in meta.get('source_roots', {}).items()
+                                        for path in source_files({**meta, 'source_directory': root})]
+        if (stray := stray_page(site, names, sources)):
+            return f"the site holds a page the previous build did not make ({stray})"
         if self.sources_unrecorded:     # a file deleted before this build would stay
             return 'the source files of the previous build are not recorded'
         if self.sources:                # a partial build adds files, it never removes one

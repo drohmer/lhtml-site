@@ -79,7 +79,7 @@ class GeneratorRegressions(unittest.TestCase):
         menu = (self.site / 'theme/js/menu.js').read_text()
         self.assertIn('b/index.html', menu)
         self.assertTrue((self.site / 'sitemap/second.html').exists())
-        structure = json.loads((self.root / '.verification/structure.json').read_text())
+        structure = json.loads((self.root / '.verification/structure.json').read_text())['pages']
         self.assertEqual(structure[1]['title'], 'Second')       # the new page was read by this build
         self.assertNotIn('custom', structure[1])                # its settings stay out of the site
         self.assertEqual((self.site / 'asset.txt').read_text(), 'changed asset')

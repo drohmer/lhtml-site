@@ -7,18 +7,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 - The site holds no file of the generator any more, which the server served
-  to anyone: the Jinja templates of the theme (`theme/template/`) are read
-  in the theme and not copied; the record of the pages that `--only`
-  completes is kept in `.verification/structure.json` (next to the
-  dependency store), not in `structure/` of the site; `sitemap/`, a
-  redirection per page, empty pages for a search engine, is
-  written no more. The configuration asks for them back: `publish_sitemap:
-  true` (its redirections are marked `noindex`), `publish_structure: true`
-  (for a custom theme or plugin that reads `structure/structure.json`). A
-  `--only` build removes the ones an earlier version wrote; a site removed
-  since the last build is built again whole.
+  to anyone: the Jinja templates of the theme (`theme/template/`, and the
+  directories its `theme.yaml` names), its `theme.yaml` and `design.yaml`
+  are read in the theme and not copied; the record of the pages that
+  `--only` completes is kept in `.verification/structure.json` (next to the
+  dependency store, with the site it describes, written once that site is
+  published), not in `structure/` of the site; `sitemap/`, a redirection per
+  page, empty pages for a search engine, is written no more. The next build,
+  full or `--only`, writes a site without them. `--only` completes only the
+  site its record describes: another site, a site missing a page or holding
+  one the record does not list (a page put back by hand), is built whole.
 
 ### Added
+- `publish_sitemap: true` and `publish_structure: true` in the
+  configuration write `sitemap/` (its redirections marked `noindex`) and
+  `structure/structure.{json,yaml}` into the site again, for the links and
+  the custom themes or plugins that read them there.
 - The `slides` theme: a horizontal swipe goes to the next slide (to the
   left) or the previous one (to the right), on a phone, a tablet or a touch
   screen. A pinch, a vertical scroll, a page zoomed in, and a swipe on a

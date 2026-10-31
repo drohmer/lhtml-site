@@ -114,8 +114,10 @@ that list into `structure/structure.{json,yaml}` of the site (a custom theme
 or plugin that reads it there), `publish_sitemap: true` writes `sitemap/`, a
 redirection per page named after its title id (`sitemap/introduction.html`,
 marked `noindex` for the search engines), a stable address for a link from
-elsewhere. The site of an earlier version held both: a `--only` build
-removes them, a full build writes a site without them. What is written for the author and
+elsewhere. The theme's `theme.yaml` and `design.yaml`, and the directories of
+the templates its `theme.yaml` names, stay out of the site too. The site of
+an earlier version held all of them: the next build, full or `--only`,
+writes a site without them. What is written for the author and
 their agent goes to `.structure/`, next to the configuration: `agents.md`
 (the procedure), `design.md` (the macros and tokens of the design),
 `credits.md` (the origin of the pages and the credits of the images) and
@@ -214,7 +216,7 @@ _site/01_procedural/images/slide_000.jpg ...
 
 The generator runs the following stages:
 
-1. **Data preparation** — Find the `.html.j2` and `.md.j2` templates, select and order them (deck), copy the sources and theme to the site (or, with `--only`, the templates and assets of its pages), extract titles and sitemap, export `structure/`, write the design (`design.css` in the site, `design.md` in `.structure/`)
+1. **Data preparation** — Find the `.html.j2` and `.md.j2` templates, select and order them (deck), copy the sources and theme to the site (or, with `--only`, the templates and assets of its pages; the theme without its templates and declarations, read in the theme), extract the titles and the structure of the site (`sitemap/` and `structure/` in the site with `publish_sitemap` / `publish_structure`), write the design (`design.css` in the site, `design.md` in `.structure/`)
 2. **Pre-process plugins** — Plugin hooks before Jinja2 rendering
 3. **Jinja2 rendering** — Render the templates with their variables (see [Template variables](#template-variables))
 4. **Mid-process plugins** — Plugin hooks between Jinja2 and LHTML
@@ -415,10 +417,11 @@ slides:
   title in the menu; `duration` (minutes) is summed in the build log (the
   `duration` of the deck itself is the length of the talk: the log gives the
   total against it, and warns beyond);
-  `params` (see below); every other key (`message`, `notes`, ...) is exported
-  in `structure.yaml`, like the page `config.yaml` (`structure.yaml` also gives
-  the template of each page in the site, `template`, and its origin: `src`,
-  its source file, `source`, `occurrence`). The metadata of a
+  `params` (see below); every other key (`message`, `notes`, ...) is a
+  setting of the page given to the plugins (`meta['structure']`), like the
+  page `config.yaml`, with the template of each page in the site, `template`,
+  and its origin: `src`, its source file, `source`, `occurrence`; only the
+  keys a theme displays are written down (see "The site is published" above). The metadata of a
   directory or a glob applies to each of its pages, except `duration`, which
   is the duration of all its pages together.
 - Pages that are not in the deck are not generated (they are listed in the
