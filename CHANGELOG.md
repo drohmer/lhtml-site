@@ -5,18 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Changed
-- The site holds no file of the generator any more, which the server served
-  to anyone: the Jinja templates of the theme (`theme/template/`, and the
-  templates its `theme.yaml` names), its `theme.yaml` and `design.yaml`
-  are read in the theme and not copied; the record of the pages that
-  `--only` completes is kept in `.verification/structure.json` (next to the
-  dependency store, with the site it describes, written once that site is
-  published), not in `structure/` of the site; `sitemap/`, a redirection per
-  page, empty pages for a search engine, is written no more. The next build,
-  full or `--only`, writes a site without them. `--only` completes only the
-  site its record describes: another site, a site missing a page or holding
-  one the record does not list (a page put back by hand), is built whole.
+## [1.1.0] - 2026-10-31
 
 ### Added
 - `publish_sitemap: true` and `publish_structure: true` in the
@@ -63,6 +52,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   The entries of the drawer menu are about 40 px high (below 860 px).
 
 ### Changed
+- The site holds no file of the generator any more, which the server served
+  to anyone: the Jinja templates of the theme (`theme/template/`, and the
+  templates its `theme.yaml` names), its `theme.yaml` and `design.yaml`
+  are read in the theme and not copied; the record of the pages that
+  `--only` completes is kept in `.verification/structure.json` (next to the
+  dependency store, with the site it describes, written once that site is
+  published), not in `structure/` of the site; `sitemap/`, a redirection per
+  page, empty pages for a search engine, is written no more. The next build,
+  full or `--only`, writes a site without them. `--only` completes only the
+  site its record describes: another site, a site missing a page or holding
+  one the record does not list (a page put back by hand), is built whole.
 - The themes load KaTeX only on the pages that write formulas (`\(`, `\[`,
   `$$`, outside code, comments and Jinja). The page setting `math: true` or
   `math: false` decides instead. Templates read `page.math`,
@@ -176,4 +176,6 @@ command, `lhtml-site`, built on LHTML 3 (`lhtml-markup` on PyPI).
 ### Fixed
 - The slides no longer write their menu in the console of the browser.
 
+[Unreleased]: https://github.com/drohmer/lhtml-site/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/drohmer/lhtml-site/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/drohmer/lhtml-site/releases/tag/v1.0.0
