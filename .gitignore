@@ -21,3 +21,6 @@ build/
 
 # The distributions built by python -m build
 dist/
+
+# Secrets (lien vers damien_confidential/secrets)
+.env
