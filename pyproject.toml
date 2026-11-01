@@ -51,7 +51,7 @@ math = ["quickjs>=1.19"]
 
 [project.urls]
 Repository = "https://github.com/drohmer/lhtml-site"
-Documentation = "https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md"
+Documentation = "https://scholartools.fr/lhtml/"
 Changelog = "https://github.com/drohmer/lhtml-site/blob/main/CHANGELOG.md"
 Issues = "https://github.com/drohmer/lhtml-site/issues"
 LHTML = "https://github.com/drohmer/lhtml"
