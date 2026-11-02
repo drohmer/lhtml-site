@@ -4,6 +4,7 @@ The build tests run everywhere; the ones that run the menu in Chromium are opt-i
 other browser tests (LHTML_BROWSER_TEST=1).
 """
 import functools
+import html
 import http.server
 import json
 import os
@@ -87,6 +88,10 @@ def test_the_starter_builds_with_its_sections_in_order(starter):
 def test_defaults_without_settings(starter):
     site = build(starter)
     page = (site / '01_start/01_install/index.html').read_text(encoding='utf-8')
+    assert '<html lang="en">' in page and '>Skip to content</a>' in page
+    assert 'placeholder="Search the docs"' in page and '<span class="pager-label">Previous</span>' in page
+    assert json.loads(re.search(r'<script id="docs-strings" type="application/json">(.*?)</script>',
+                                page).group(1))['copy'] == 'Copy'
     assert '<span class="brand-name">Docs</span>' in page
     assert '<title>Install</title>' in page                     # no suffix without docs.title
     assert 'icon-btn" href=' not in page and '<footer' not in page
@@ -113,6 +118,134 @@ def test_the_settings_reach_the_pages(starter):
                                 page, re.S).group(1))
     assert menu == SETTINGS['menu']
     build(starter, {})                                          # back to the defaults
+
+
+def nav_of(page):
+    return re.search(r'<nav id="toc" class="nav">(.*?)</nav>', page, re.S).group(1)
+
+
+def pager_of(page):
+    """[previous title, next title] of the pager written in the page (None: no link)."""
+    pager = re.search(r'<nav class="pager"[^>]*>(.*?)</nav>', page, re.S).group(1)
+    found = dict(re.findall(r'<a class="pager-link (prev|next)" href="[^"]*"><span class="pager-label">[^<]*</span>'
+                            r'<span class="pager-title">([^<]*)</span></a>', pager))
+    return [html.unescape(found[r]) if r in found else None for r in ('prev', 'next')]
+
+
+def test_the_menu_and_the_pager_are_written_in_the_pages(starter):
+    """The menu and previous / next are in the HTML, without JavaScript: the same menu as
+    js/menu.js built in the browser (open / closed parts, groups, labels, current page)."""
+    site = build(starter, SETTINGS)
+    toc = toc_of(site)
+    for k, entry in enumerate(toc):
+        page = (site / entry['path']).read_text(encoding='utf-8')
+        root = '../' * entry['path'].count('/')
+        active = re.findall(r'<a href="([^"]+)" class="nav-link active[^"]*" aria-current="page">', nav_of(page))
+        assert active == [root + entry['path']], (entry, active)
+        assert pager_of(page) == [toc[k - 1]['title'] if k > 0 else None,
+                                  toc[k + 1]['title'] if k + 1 < len(toc) else None]
+    nav = nav_of((site / 'index.html').read_text(encoding='utf-8'))
+    # the sections in the order of the settings, Reference closed (open: false)
+    assert re.findall(r'<details class="nav-section" data-key="([^"]+)"( open)?>', nav) == [
+        ('Reference', ''), ('Get started', ' open'), ('Guides', ' open')]
+    assert re.findall(r'<details class="nav-group" data-key="([^"]+)"( open)?>', nav) == [
+        ('Reference/Types', ''), ('Reference/Other', '')]                    # groups: closed
+    assert re.findall(r'<details class="nav-subgroup" data-key="([^"]+)" open>', nav) == [
+        'Guides/Writing', 'Guides/Publishing']
+    assert re.findall(r'class="nav-link mono">([^<]*)<', nav) == ['02_vec']   # not Other, not ungrouped
+    assert '<a href="01_start/index.html" class="nav-link">Overview</a>' in nav
+    assert '<summary class="nav-section-title"><a href="01_start/index.html">Get started</a></summary>' in nav
+    assert '<summary class="nav-section-title"><span>Guides</span></summary>' in nav     # no index page
+    # a page of the closed section opens it, and its group
+    nav = nav_of((site / '03_reference/02_vec/index.html').read_text(encoding='utf-8'))
+    assert '<details class="nav-section" data-key="Reference" open>' in nav
+    assert '<details class="nav-group" data-key="Reference/Types" open>' in nav
+    assert '<details class="nav-group" data-key="Reference/Other">' in nav
+    # menu.js builds no menu: it keeps the state of the parts
+    menu = (site / 'theme/js/menu.js').read_text(encoding='utf-8')
+    assert 'createElement' not in menu and "dataset.key" in menu
+    build(starter, {})
+
+
+def test_a_partial_build_says_when_the_menu_of_the_other_pages_is_out_of_date(tmp_path):
+    project = tmp_path / 'my-docs'
+    subprocess.run(GENERATE + ['init', str(project), '--theme', 'docs'], check=True, capture_output=True)
+    build(project)
+    run = lambda: subprocess.run(GENERATE + ['--only', '01_start/01_install'], cwd=project,
+                                 capture_output=True, text=True)
+    result = run()
+    assert result.returncode == 0 and 'the menu changed' not in result.stdout + result.stderr
+    page = project / 'src/01_start/01_install/index.md.j2'
+    page.write_text(page.read_text(encoding='utf-8').replace('title: Install', 'title: Set up'), encoding='utf-8')
+    result = run()
+    assert result.returncode == 0 and 'the menu changed' in result.stdout + result.stderr
+    assert '>Set up</a>' in (project / '.site/01_start/01_install/index.html').read_text(encoding='utf-8')
+
+
+def test_the_breadcrumb_links_the_section_to_its_index_page(starter):
+    site = build(starter)
+    install = (site / '01_start/01_install/index.html').read_text(encoding='utf-8')
+    assert '<li class="bc-section"><a href="../../01_start/index.html">Get started</a></li>' in install
+    # the index page itself, and a section with no index page: text
+    index = (site / '01_start/index.html').read_text(encoding='utf-8')
+    assert '<li class="bc-section"><span>Get started</span></li>' in index
+    write = (site / '02_guides/01_write/index.html').read_text(encoding='utf-8')
+    assert '<li class="bc-section"><span>Guides</span></li>' in write
+    css = (DOCS / 'css/docs.css').read_text(encoding='utf-8')
+    assert '.breadcrumb li.bc-section a { color: var(--accent-text); }' in css
+
+
+def test_the_texts_in_the_language_of_the_site(starter):
+    """lang: fr: the texts of the theme in French; strings: and the older settings replace
+    one of them."""
+    site = build(starter, {'lang': 'fr', 'strings': {'copy': 'Copier le code', 'next': 'Après'},
+                           'search_placeholder': 'Chercher', 'menu': {'home_label': 'Départ'}})
+    page = (site / '01_start/01_install/index.html').read_text(encoding='utf-8')
+    assert '<html lang="fr">' in page and '>Aller au contenu</a>' in page
+    assert 'aria-label="Ouvrir le menu"' in page and 'aria-label="Menu de la documentation"' in page
+    assert 'placeholder="Chercher"' in page and 'aria-label="Rechercher dans la documentation"' in page
+    assert '<span class="pager-label">Précédent</span>' in page and '<span class="pager-label">Après</span>' in page
+    assert 'class="nav-link">Départ</a>' in page and 'Vue d&#39;ensemble</a>' in page
+    assert 'aria-label="Fil d&#39;Ariane"' in page
+    strings = json.loads(re.search(r'<script id="docs-strings" type="application/json">(.*?)</script>',
+                                   page).group(1))
+    assert strings['copy'] == 'Copier le code' and strings['on_this_page'] == 'Sur cette page'
+    for english in ('Skip to content', 'Previous', 'Search the docs', 'Toggle dark mode'):
+        assert english not in page, english
+    # the scripts read their texts there, with the English ones as a fallback
+    script = (site / 'theme/js/site.js').read_text(encoding='utf-8')
+    assert "text('copy', 'Copy')" in script and "text('on_this_page', 'On this page')" in script
+    build(starter, {})
+
+
+def test_the_language_switch_stays_on_phones():
+    """Below 480 px the repository link leaves the top bar, not a link to the other language
+    (icon-btn lang-switch, added by an overlay)."""
+    css = (DOCS / 'css/docs.css').read_text(encoding='utf-8')
+    assert '.topbar-actions .icon-btn[href]:not(.lang-switch) { display: none; }' in css
+
+
+def test_readable_heading_ids(tmp_path):
+    """The docs theme asks for slugs (theme.yaml, heading_ids): complete, unique in the page,
+    never an id of the theme, an id written by the author kept; LHTML pages as Markdown ones."""
+    project = tmp_path / 'my-docs'
+    subprocess.run(GENERATE + ['init', str(project), '--theme', 'docs'], check=True, capture_output=True)
+    page = project / 'src/01_start/01_install/index.md.j2'
+    page.write_text(page.read_text(encoding='utf-8') + '\n## When something goes wrong\n\n## Step\n\n## Step\n\n'
+                    '## Content\n\n## Only LHTML?\n\n## {{ "Rendered" }} by Jinja\n\n## mine\n\n## Mine {: #mine}\n',
+                    encoding='utf-8')
+    lhtml = project / 'src/01_start/03_lhtml/index.html.j2'
+    lhtml.parent.mkdir()
+    lhtml.write_text('---\ntitle: LHTML page\nsection: Get started\n---\n= LHTML page\n\n== Café crème\n\n'
+                     '==(#kept) Written\n', encoding='utf-8')
+    site = build(project)
+    ids = re.findall(r'<h2[^>]* id="([^"]+)"', (site / '01_start/01_install/index.html').read_text(encoding='utf-8'))
+    for expected in ('when-something-goes-wrong', 'step', 'step-2', 'content-2', 'only-lhtml',
+                     'rendered-by-jinja', 'mine-2', 'mine'):
+        assert expected in ids, (expected, ids)
+    assert not any(re.search(r'_l\d$|_id\d', i) for i in ids), ids
+    ids = re.findall(r'<h2[^>]* id="([^"]+)"', (site / '01_start/03_lhtml/index.html').read_text(encoding='utf-8'))
+    assert ids == ['cafe-creme', 'kept']
 
 
 def test_a_heading_search_does_not_take_the_id_of_the_search_box(tmp_path):
@@ -217,6 +350,20 @@ def test_a_collapsed_section_stays_collapsed_after_a_reload(served):
     page.reload()
     assert not page.eval_on_selector(guides, 'd => d.open')
     assert page.evaluate("() => JSON.parse(localStorage.getItem('docs-menu-open'))")['Guides'] is False
+
+
+@browser_test
+def test_the_language_switch_fits_the_top_bar_of_a_phone(served):
+    serve, page = served
+    base, toc = serve(SETTINGS)
+    page.set_viewport_size({'width': 390, 'height': 700})
+    page.goto(base + '01_start/01_install/index.html')
+    page.evaluate("() => { const a = document.createElement('a'); a.className = 'icon-btn lang-switch';"
+                  " a.href = '#'; a.textContent = 'FR'; document.querySelector('.topbar-actions').prepend(a); }")
+    assert page.is_visible('.lang-switch') and page.is_visible('.theme-toggle')
+    assert not page.is_visible('.topbar-actions a.icon-btn:not(.lang-switch)')         # the repository
+    assert page.eval_on_selector('.theme-toggle', 'b => b.getBoundingClientRect().right') <= 390
+    assert page.evaluate('() => document.documentElement.scrollWidth') <= 390
 
 
 @browser_test

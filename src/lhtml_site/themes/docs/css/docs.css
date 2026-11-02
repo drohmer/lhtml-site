@@ -408,6 +408,7 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
   .brand-sub { display: none; }
   .search { max-width: none; }
   .search-kbd { display: none; }
+  #site-search { padding-right: 10px; }      /* no / key shown: the room goes to the placeholder */
   .sidebar {
     position: fixed; z-index: 50; top: 0; left: 0; bottom: 0; height: 100vh;
     width: min(300px, 84vw); background: var(--bg); transform: translateX(-102%);
@@ -430,7 +431,9 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
   .nav-group summary { padding: 9px 12px; font-size: 15.5px; }
 }
 @media (max-width: 480px) {
-  .topbar-actions .icon-btn[href] { display: none; }
+  /* the repository link leaves its room to the search box; a link to the other language of
+     the site (class lang-switch, added by an overlay) stays */
+  .topbar-actions .icon-btn[href]:not(.lang-switch) { display: none; }
   .brand-name { font-size: 17px; }
   .pager { grid-template-columns: 1fr; }
   .pager-link.next { grid-column: 1; }
@@ -443,9 +446,13 @@ figure.figure figcaption { margin-top: 10px; font-size: 14px; color: var(--muted
 .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; margin: 0 0 8px; padding: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
 .breadcrumb li { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .breadcrumb li + li::before { content: ">"; margin: 0 7px; color: var(--muted); opacity: .7; }
-.breadcrumb li.bc-section { font-weight: 600; color: var(--accent-text); letter-spacing: .02em; }
+.breadcrumb li.bc-section { font-weight: 600; letter-spacing: .02em; }
 .breadcrumb a { color: inherit; }
 .breadcrumb a:hover { color: var(--accent-text); }
+/* the section in the accent color when it links to its index page; text otherwise */
+.breadcrumb li.bc-section a { color: var(--accent-text); }
+.breadcrumb li.bc-section a:hover { text-decoration: underline; }
+.breadcrumb li.bc-section span { color: var(--text-soft); }
 .breadcrumb li[aria-current] { color: var(--text-soft); }
 
 /* ---- 404.html (template/404.html) ------------------------------------------------ */

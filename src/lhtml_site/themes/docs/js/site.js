@@ -4,15 +4,20 @@
 // search (Pagefind, built after the site).
 //
 // Hook for an overlay: the scripts of the setting docs.js run after this one (all are
-// deferred, in order) and find window.docsTheme = {root, storage, $, $$}: the path to the
-// root of the site, the prefix of the localStorage keys, and two query helpers.
+// deferred, in order) and find window.docsTheme = {root, storage, strings, $, $$}: the path
+// to the root of the site, the prefix of the localStorage keys, the texts of the scripts in the
+// language of the site (template/strings.html), and two query helpers.
 
 (function () {
   const root = document.body.dataset.root || '';
   const storage = document.body.dataset.storage || 'docs';
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
-  window.docsTheme = {root, storage, $, $$};
+  // the texts, written by the build in <script id="docs-strings"> (template/strings.html)
+  let T = {};
+  try { T = JSON.parse($('#docs-strings').textContent) || {}; } catch (_) { T = {}; }
+  const text = (key, fallback) => T[key] || fallback;
+  window.docsTheme = {root, storage, strings: T, $, $$};
 
   // ---- theme ----------------------------------------------------------
   const toggle = $('.theme-toggle');
@@ -40,7 +45,7 @@
   if (pageToc && headings.length > 1) {
     const title = document.createElement('div');
     title.className = 'page-toc-title';
-    title.textContent = 'On this page';
+    title.textContent = text('on_this_page', 'On this page');
     pageToc.appendChild(title);
     const links = headings.map(h => {
       const a = document.createElement('a');
@@ -69,9 +74,10 @@
       box.className = 'mobile-toc';
       box.setAttribute('data-pagefind-ignore', '');
       const summary = document.createElement('summary');
-      summary.innerHTML = '<span class="mobile-toc-label">On this page</span><span class="mobile-toc-current"></span>';
+      summary.innerHTML = '<span class="mobile-toc-label"></span><span class="mobile-toc-current"></span>';
+      $('.mobile-toc-label', summary).textContent = text('on_this_page', 'On this page');
       const list = document.createElement('nav');
-      list.setAttribute('aria-label', 'On this page');
+      list.setAttribute('aria-label', text('on_this_page', 'On this page'));
       links.forEach(l => {
         const a = l.cloneNode(true);
         a.addEventListener('click', () => { box.open = false; });
@@ -90,7 +96,7 @@
     const a = document.createElement('a');
     a.className = 'heading-anchor';
     a.href = '#' + h.id;
-    a.setAttribute('aria-label', 'Link to this section');
+    a.setAttribute('aria-label', text('link_to_section', 'Link to this section'));
     a.textContent = '#';
     h.appendChild(a);
   });
@@ -100,11 +106,12 @@
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'copy-btn';
-    btn.textContent = 'Copy';
+    const copy = text('copy', 'Copy');
+    btn.textContent = copy;
     btn.addEventListener('click', () => {
-      const text = block.querySelector('pre').innerText;
-      const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy', 1400); };
-      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => {});
+      const code = block.querySelector('pre').innerText;
+      const done = () => { btn.textContent = text('copied', 'Copied'); setTimeout(() => btn.textContent = copy, 1400); };
+      if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, () => {});
     });
     block.appendChild(btn);
   });
@@ -126,9 +133,11 @@
       box.className = 'lightbox';
       box.setAttribute('role', 'dialog');
       box.setAttribute('aria-modal', 'true');
-      box.setAttribute('aria-label', 'Figure, full size');
-      box.innerHTML = '<div class="lightbox-bar"><a class="lightbox-open" target="_blank" rel="noopener">Open the image</a>'
-                    + '<button type="button" class="lightbox-close">Close</button></div><img alt="">';
+      box.setAttribute('aria-label', text('figure_full_size', 'Figure, full size'));
+      box.innerHTML = '<div class="lightbox-bar"><a class="lightbox-open" target="_blank" rel="noopener"></a>'
+                    + '<button type="button" class="lightbox-close"></button></div><img alt="">';
+      $('.lightbox-open', box).textContent = text('open_image', 'Open the image');
+      $('.lightbox-close', box).textContent = text('close', 'Close');
       box.addEventListener('click', ev => { if (!ev.target.closest('.lightbox-open')) closeBox(); });
       document.body.appendChild(box);
     }
@@ -190,7 +199,7 @@
         pagefind = pf;
         return pf;
       }).catch(err => {
-        panel.innerHTML = '<p class="search-empty">Search is available when the site is served over http (Pagefind index not found).</p>';
+        panel.innerHTML = `<p class="search-empty">${esc(text('search_unavailable', 'Search is available when the site is served over http (Pagefind index not found).'))}</p>`;
         panel.hidden = false;
         throw err;
       });
@@ -209,7 +218,7 @@
     const data = await Promise.all(res.results.slice(0, 8).map(r => r.data()));
     if (my !== seq) return;
     if (!data.length) {
-      panel.innerHTML = `<p class="search-empty">No result for <strong>${esc(q)}</strong>.</p>`;
+      panel.innerHTML = `<p class="search-empty">${esc(text('no_result', 'No result for'))} <strong>${esc(q)}</strong>.</p>`;
     } else {
       panel.innerHTML = data.map(d => {
         const subs = exactFirst((d.sub_results || []).filter(s => s.url !== d.url), q).slice(0, 4);

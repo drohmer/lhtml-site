@@ -3,7 +3,8 @@
 import unittest
 
 from lhtml_site.generator_tool import extract_title
-from lhtml_site.headings import generate_new_id, has_jinja, jinja_filter, lhtml_headings, page_unique_id
+from lhtml_site.headings import (generate_new_id, has_jinja, jinja_filter, lhtml_headings, page_unique_id,
+                                 slug, slug_unique)
 
 
 class HeadingIds(unittest.TestCase):
@@ -26,6 +27,34 @@ class HeadingIds(unittest.TestCase):
         storage = {}
         self.assertEqual([generate_new_id('Part - One', storage) for _ in range(3)],
                          ['part__one', 'part__one_id2', 'part__one_id3'])
+
+
+class SlugIds(unittest.TestCase):
+    """The readable ids of a theme that asks for them (heading_ids: scheme: slug)."""
+
+    def test_readable_complete_url_safe(self):
+        for title, expected in [('Only LHTML?', 'only-lhtml'),
+                                ('When something goes wrong', 'when-something-goes-wrong'),
+                                ('CLI options', 'cli-options'),
+                                ("Vue d'ensemble", 'vue-densemble'),
+                                ('Vérifier l’installation', 'verifier-linstallation'),
+                                ('Cœur & âme', 'coeur-ame'),
+                                ('std::vector, exemples', 'std-vector-exemples'),
+                                ('Ani3D - Introduction (2)', 'ani3d-introduction-2'),
+                                ('<b>Bold</b> &amp; {% raw %}{{ x }}{% endraw %}', 'bold-x'),
+                                ('a < b', 'a-b'),
+                                ('Η γραμμή', 'η-γραμμη'),
+                                ('?!', 'section')]:
+            self.assertEqual(slug(title), expected, title)
+
+    def test_unique_in_the_page(self):
+        taken = {'content'}
+        self.assertEqual([slug_unique(t, taken) for t in ('Step', 'Step', 'step!', 'Content')],
+                         ['step', 'step-2', 'step-3', 'content-2'])
+
+    def test_the_filter_uses_the_scheme_of_the_build(self):
+        meta = {'heading_scheme': 'slug', 'heading_ids': {'a.html': {'intro'}}}
+        self.assertEqual(jinja_filter(meta)('Intro', 2, 'a.html'), 'intro-2')
 
 
 class JinjaHeadings(unittest.TestCase):

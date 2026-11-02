@@ -11,3 +11,9 @@ not_found: 'theme/template/404.html'   # the content of 404.html (with base_url:
 layout:
   root: '#content article'  # the article, without the menu, the pager and the footer
   exclude: 'nav, footer'
+# readable ids for the headings, unique in their page: "When something goes wrong" ->
+# when-something-goes-wrong (lhtml_site/headings.py, slug), never one of the ids of the theme
+heading_ids:
+  scheme: slug
+  reserved: [content, sidebar, toc, title_id, site-search, search-results, current-page-id,
+             docs-menu-config, docs-strings, not-found-query]

@@ -1,0 +1,73 @@
+{#- The texts the docs theme writes itself (labels, buttons, the 404 page...), in the language of
+    the site: `t`, imported with context by base.html, nav.html and 404.html. The set of `lang`
+    (docs: lang: fr; en for any other language), then the `strings` of the settings
+    (docs: strings: {copy: Copier}), key by key. The scripts of the theme read theirs in
+    <script id="docs-strings"> (js/site.js, base.html). The older settings search_placeholder, repo_label,
+    menu: home_label and index_label keep the last word on their text. -#}
+{%- set BUILT_IN = {
+  'en': {
+    'skip_to_content': 'Skip to content',
+    'open_menu': 'Open the menu',
+    'search_placeholder': 'Search the docs',
+    'search_label': 'Search the documentation',
+    'repository': 'Repository',
+    'toggle_theme': 'Toggle dark mode',
+    'menu_label': 'Documentation menu',
+    'breadcrumb': 'Breadcrumb',
+    'pager_label': 'Previous and next pages',
+    'previous': 'Previous',
+    'next': 'Next',
+    'home': 'Home',
+    'overview': 'Overview',
+    'on_this_page': 'On this page',
+    'link_to_section': 'Link to this section',
+    'copy': 'Copy',
+    'copied': 'Copied',
+    'figure_full_size': 'Figure, full size',
+    'open_image': 'Open the image',
+    'close': 'Close',
+    'no_result': 'No result for',
+    'search_unavailable': 'Search is available when the site is served over http (Pagefind index not found).',
+    'page_not_found': 'Page not found',
+    'not_found_text': 'There is no page at this address: it may have moved, or the link is out of date.',
+    'did_you_mean': 'Did you mean',
+    'sections': 'Sections',
+  },
+  'fr': {
+    'skip_to_content': 'Aller au contenu',
+    'open_menu': 'Ouvrir le menu',
+    'search_placeholder': 'Rechercher dans la doc',
+    'search_label': 'Rechercher dans la documentation',
+    'repository': 'Dépôt',
+    'toggle_theme': 'Mode sombre',
+    'menu_label': 'Menu de la documentation',
+    'breadcrumb': "Fil d'Ariane",
+    'pager_label': 'Pages précédente et suivante',
+    'previous': 'Précédent',
+    'next': 'Suivant',
+    'home': 'Accueil',
+    'overview': "Vue d'ensemble",
+    'on_this_page': 'Sur cette page',
+    'link_to_section': 'Lien vers cette section',
+    'copy': 'Copier',
+    'copied': 'Copié',
+    'figure_full_size': 'Figure en taille réelle',
+    'open_image': "Ouvrir l'image",
+    'close': 'Fermer',
+    'no_result': 'Aucun résultat pour',
+    'search_unavailable': "La recherche fonctionne quand le site est servi en http (index Pagefind introuvable).",
+    'page_not_found': 'Page introuvable',
+    'not_found_text': "Il n'y a pas de page à cette adresse : elle a peut-être été déplacée, ou le lien est périmé.",
+    'did_you_mean': 'Vouliez-vous dire',
+    'sections': 'Sections',
+  },
+} -%}
+{%- set d = docs if docs is defined and docs else {} -%}
+{%- set t = {} -%}
+{%- set _ = t.update(BUILT_IN.en) -%}
+{%- set _ = t.update(BUILT_IN.get(((d.lang or 'en')|string|lower|replace('_', '-')).split('-')[0], {})) -%}
+{%- set _ = t.update(d.strings or {}) -%}
+{%- if d.search_placeholder %}{% set _ = t.update({'search_placeholder': d.search_placeholder}) %}{% endif -%}
+{%- if d.repo_label %}{% set _ = t.update({'repository': d.repo_label}) %}{% endif -%}
+{%- if (d.menu or {}).home_label %}{% set _ = t.update({'home': d.menu.home_label}) %}{% endif -%}
+{%- if (d.menu or {}).index_label %}{% set _ = t.update({'overview': d.menu.index_label}) %}{% endif -%}

@@ -397,7 +397,8 @@ def restore_previous_pages(meta, failed):
 def sitemap_keywords_used(env, templates):
     """Names pathTo_<id> / linkTo_<id> used by the templates and by the
     templates they extend, include or import (only these are computed for
-    each page); None when a template is chosen at run time (all are used)."""
+    each page), and site_pages if one reads the pages of the menu; None when
+    a template is chosen at run time (all are used)."""
     used, seen, pending = set(), set(), list(templates)
     while pending:
         name = pending.pop()
@@ -411,7 +412,7 @@ def sitemap_keywords_used(env, templates):
             references = list(jinja_meta.find_referenced_templates(ast))
         except TemplateError:
             continue                    # reported when the page is rendered
-        used.update(n for n in variables if n.startswith(('pathTo_', 'linkTo_')))
+        used.update(n for n in variables if n.startswith(('pathTo_', 'linkTo_')) or n == 'site_pages')
         for reference in references:
             if reference is None:
                 return None
@@ -454,6 +455,7 @@ def jinja_environment(meta, selected, built):
     env = Environment(loader=loader, cache_size=0, extensions=['jinja_markdown.MarkdownExtension'])
     env.filters['markdown_page'] = markdown_page.convert         # the content of a Markdown page
     env.filters[headings.JINJA_FILTER] = headings.jinja_filter(meta)   # the id of a heading rendered by Jinja
+    env.filters['heading_slug'] = headings.slug     # the id a heading gets in the scheme 'slug' (a theme's links)
     return env
 
 
@@ -473,6 +475,11 @@ def render_jinja(meta, selected, built, sitemap, log, credits_of=None, errors=No
     entries = dict(zip(selected, meta['structure']))
     credits_of = credits_of or {page: {} for page in selected}
     deck_credits = credits.all_credits(selected, credits_of)
+    # The pages of the menu, in order (lhtml_site/menu.py): a theme renders its
+    # menu and previous / next in each page with them (site_pages[pageID] is the page)
+    manifest = theme.of(meta)
+    site_pages = menu.table_of_contents(meta, manifest) if manifest.get('toc') else []
+    meta['menu_in_pages'] = bool(site_pages) and (used is None or 'site_pages' in used)
     for k, page in enumerate(selected):
         if page not in built_set:
             continue
@@ -495,7 +502,8 @@ def render_jinja(meta, selected, built, sitemap, log, credits_of=None, errors=No
                                            'page': entries[page],
                                            'credit': credits.credit_function(page, credits_of[page]),
                                            'credits': deck_credits,
-                                           'pathToRoot': page.path_to_root, 'pageID': k})
+                                           'pathToRoot': page.path_to_root, 'pageID': k,
+                                           'site_pages': site_pages})
         except Exception as e:
             log.error(f'Jinja: {e}', jinja_place(e, page, meta, {p.site_template: p for p in selected}))
             failed.append(page)
@@ -905,6 +913,7 @@ def generate_site(meta, selected, built):
     log.detail(f"Source: {filesystem.shown(meta['source_directory'])}, plugins: {meta['plugin']}")
 
     with log.stage('Data preparation'):
+        menu.remember(meta)                     # --only: the menu of the pages not generated
         meta['loaded_design'] = load_project_design(meta)
         meta['macros'] = design.lhtml_macros(meta['loaded_design'])
         sitemap, (credits_of, credit_errors) = prepare_data(meta, selected, built, log)

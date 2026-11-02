@@ -69,7 +69,10 @@ def katex_files(html):
 
 @pytest.mark.parametrize('name', ['webpage-frame', 'slides', 'slides-pdf', 'docs'])
 def test_each_template_loads_katex_when_page_math_is_true(name):
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(REPO / 'src/lhtml_site/themes' / name / 'template'))
+    # as the build loads them: the templates of the theme also as theme/... (lhtml_site/generate.py)
+    env = jinja2.Environment(loader=jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader(REPO / 'src/lhtml_site/themes' / name / 'template'),
+        jinja2.PrefixLoader({'theme': jinja2.FileSystemLoader(REPO / 'src/lhtml_site/themes' / name)})]))
     template = env.get_template('base.html')
     assert katex_files(template.render(page={'math': True}, pathToRoot='', pageID=1)) == KATEX
     assert katex_files(template.render(page={'math': False}, pathToRoot='', pageID=1)) == []

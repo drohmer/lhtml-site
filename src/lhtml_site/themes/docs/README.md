@@ -34,8 +34,17 @@ math: true               # optional: load KaTeX (default: when the page writes f
   menu links to it, and the menu lists it first, as "Overview". Without a deck, name the
   section directories so that they sort in order (`01_start`, `02_guides`): the
   `index.md.j2` of a directory comes before its pages.
+- The menu and the previous / next links are written in each page by the build
+  (`template/nav.html`): they work without JavaScript and for the crawlers. `js/menu.js` keeps
+  the open / closed state the reader leaves to the sections and groups, and scrolls the menu to
+  the current page. A build with `--only` warns when the menu changed (a title, a section): the
+  pages it does not generate keep the previous one until the next full build.
+- The breadcrumb above the title: the section links to its index page (`section_index`, else
+  `<section>/index.html`), and is plain text when the section has none.
 - The h2 of a page, and any element with an `id` and a `data-toc` attribute (its label), are
   listed in "On this page".
+- Headings get readable ids, unique in their page: `## When something goes wrong` ->
+  `#when-something-goes-wrong` (see "Heading ids" below).
 - A figure that opens full size on click:
   `<figure class="figure"><a class="figure-zoom" href="a.svg"><img src="a.svg" alt="..."></a><figcaption>...</figcaption></figure>`.
   The width of the image can be set by the CSS variable `--fig-w` (style attribute).
@@ -65,10 +74,12 @@ keywords:
     repo_label: The project on GitHub
     footer: Built with lhtml-site.   # no footer without it
     search_placeholder: Search the docs
-    lang: en
+    lang: en                         # <html lang>, and the language of the texts of the theme (en, fr)
+    strings:                         # any text of the theme, over those of `lang` (template/strings.html)
+      copy: Copy code
     storage: docs                    # prefix of the localStorage keys <storage>-theme, <storage>-menu-open
     section_index:                   # breadcrumb: the section and group link to these pages
-      How-to: how-to/index.html      # (group anchor: the group name in lower case, with hyphens)
+      How-to: how-to/index.html      # (group anchor: the id of the group's heading there, its slug)
     css: [theme/css/extra.css]       # stylesheets loaded after the docs.css of the theme
     js: [theme/js/extra.js]          # scripts run after the site.js of the theme
     menu:
@@ -82,6 +93,48 @@ keywords:
           group_link_class: mono     # an extra class on the links of its groups
           plain_groups: [Other]      # groups whose links do not get that class
 ```
+
+## Languages
+
+`lang` names the language of the site: the `lang` attribute of the pages, and the texts the
+theme writes itself (buttons, labels, the 404 page, "On this page", previous / next...). The
+theme has them in English (`en`, the default, also for a language it does not know) and
+French (`fr`; `fr-CA` reads `fr`). `strings` replaces any of them, key by key; the keys are
+those of `template/strings.html`. The older settings `search_placeholder`, `repo_label`,
+`menu.home_label` and `menu.index_label` keep the last word on their text.
+
+```yaml
+keywords:
+  docs:
+    lang: fr                         # the texts of the theme in French
+    strings:
+      search_placeholder: Rechercher dans la doc
+      repository: Le dépôt
+```
+
+Keys: `skip_to_content`, `open_menu`, `search_placeholder`, `search_label`, `repository`,
+`toggle_theme`, `menu_label`, `breadcrumb`, `pager_label`, `previous`, `next`, `home`,
+`overview`, `on_this_page`, `link_to_section`, `copy`, `copied`, `figure_full_size`,
+`open_image`, `close`, `no_result`, `search_unavailable`, `page_not_found`, `not_found_text`,
+`did_you_mean`, `sections`. The scripts find theirs in `window.docsTheme.strings`.
+
+## Heading ids
+
+The theme asks the build for readable ids (`theme.yaml`, `heading_ids: scheme: slug`;
+`lhtml_site/headings.py`, `slug`): the text of the heading in lower case, the accents of
+Latin letters removed (`œ` -> `oe`), apostrophes dropped, the words of letters and digits
+joined by `-`, nothing else kept, never truncated. A repeated heading gets `-2`, `-3`... in its
+page; an id the author wrote (`=(#mine) Title`, `## Title {: #mine}`) is kept, and no
+generated id takes it, nor one of the ids of the theme (`content`, `toc`, `sidebar`...).
+
+| Heading | Id |
+| --- | --- |
+| `Only LHTML?` | `only-lhtml` |
+| `When something goes wrong` | `when-something-goes-wrong` |
+| `Vue d'ensemble` | `vue-densemble` |
+| `std::vector, exemples` | `std-vector-exemples` |
+
+The other themes keep the ids of the sites already published (`only_lhtml?_l2`).
 
 ## The 404 page
 
@@ -119,8 +172,10 @@ them (`css:`, `js:`).
   `--figure-card`...), with a dark variant on `:root[data-theme="dark"]`. An overlay
   stylesheet overrides the variables first, then adds its own rules.
 - **Scripts**: the scripts of `js:` run after `site.js` (all are deferred, in order) and find
-  `window.docsTheme = {root, storage, $, $$}`: the path to the root of the site, the prefix of
-  the localStorage keys, and two query helpers.
+  `window.docsTheme = {root, storage, strings, $, $$}`: the path to the root of the site, the
+  prefix of the localStorage keys, the texts of the scripts of the theme, and two query helpers.
+- **A link to the other language** of the site, added to `.topbar-actions` with the classes
+  `icon-btn lang-switch`, stays in the top bar on phones (the repository link leaves).
 
 ## Search
 
@@ -139,6 +194,7 @@ The search works when the site is served over http, not from a file opened on th
 
 ## Files
 
-`template/base.html`, `css/docs.css`, `js/menu.js` (menu and previous / next), `js/site.js`
-(everything else), `template/404.html` and `js/not_found.js` (the 404 page), `css/font.css` with `fonts/source_code_pro` (the monospace font; the text
+`template/base.html`, `template/nav.html` (the menu and previous / next),
+`template/strings.html` (the texts, by language), `css/docs.css`, `js/menu.js` (the state of
+the menu), `js/site.js` (everything else), `template/404.html` and `js/not_found.js` (the 404 page), `css/font.css` with `fonts/source_code_pro` (the monospace font; the text
 uses the system font) and `libs/katex`.

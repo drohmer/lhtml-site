@@ -108,6 +108,19 @@ def test_a_page_of_the_project_replaces_the_content_of_the_theme(project):
     assert any(entry['path'] == '404.html' for entry in toc_of(site))
 
 
+def test_the_404_page_in_the_language_of_the_site(project):
+    """lang: fr: the texts of the page and its title in French (template/strings.html)."""
+    configure(project)
+    config = project / 'configure.yaml'
+    data = yaml.safe_load(config.read_text(encoding='utf-8'))
+    data['keywords'] = {'docs': {'lang': 'fr'}}
+    config.write_text(yaml.safe_dump(data), encoding='utf-8')
+    html = (build(project, keywords=data['keywords'], base_url='/') / '404.html').read_text(encoding='utf-8')
+    assert '<title>Page introuvable</title>' in html and '<h1>Page introuvable</h1>' in html
+    assert 'Vouliez-vous dire' in html and '>Accueil</a>' in html
+    assert 'Page not found' not in html and 'Search the docs' not in html
+
+
 def test_a_page_of_the_project_in_lhtml(project):
     (project / 'src/404.html.j2').write_text('= Nothing here\n\nSee link::{{ pathToRoot }}index.html[the home page].\n',
                                              encoding='utf-8')

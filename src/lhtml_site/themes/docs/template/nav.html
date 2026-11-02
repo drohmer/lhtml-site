@@ -1,0 +1,95 @@
+{#- The side menu and previous / next, written in each page by the build, so that they work
+    without JavaScript and for the crawlers: menu() in <nav id="toc">, pager() in <nav class="pager">.
+    Imported with context by base.html. They read the pages of the site in order (site_pages,
+    lhtml_site/menu.py: path, title, section, group; site_pages[pageID] is this page) and the
+    settings `menu` of the `docs` keyword:
+      sections:    [names]  order of the sections (others follow, in order of first appearance)
+      home_label:  label of the first page when it has no section (default 'Home', strings.html)
+      index_label: label of the index page of a section, <section>/index.html (default 'Overview')
+      section: {<name>: {open: false,            the section starts closed (unless the page is in it)
+                         groups: closed,         its groups start closed, in the lighter style
+                         group_link_class: mono, extra class of the links of its groups
+                         plain_groups: [names]}} groups whose links do not get that class
+    js/menu.js then applies the open / closed state the reader left (localStorage), and scrolls
+    the menu to the current page. -#}
+{%- from 'theme/template/strings.html' import t with context -%}
+{%- set d = docs if docs is defined and docs else {} -%}
+{%- set cfg = d.menu or {} -%}
+
+{#- the URL of a page of the site, each part of its path encoded -#}
+{%- macro url(entry) %}{{ pathToRoot }}{{ entry.path|urlencode }}{% endmacro -%}
+
+{#- the index page of a section: <section>/index.html -#}
+{%- macro is_index(entry) %}{{ 'y' if entry.path.endswith('/index.html') and entry.path.count('/') == 1 }}{% endmacro -%}
+
+{%- macro link(entry, k, label=none, extra=none) -%}
+<a href="{{ url(entry) }}" class="nav-link{{ ' active' if k == pageID }}{{ ' ' ~ extra if extra }}"{{ ' aria-current="page"' if k == pageID }}>{{ (label or entry.title)|e }}</a>
+{%- endmacro -%}
+
+{#- a collapsible part (section or group): its title (a link to the index page of a section, or
+    text: a click toggles it), then its entries after a vertical line showing the level; `key`:
+    the name of its state, "section" or "section/group" -#}
+{%- macro part(cls, key, label, href, is_open) -%}
+<details class="{{ cls }}" data-key="{{ key|e }}"{{ ' open' if is_open }}><summary class="{{ cls }}-title">
+{%- if href %}<a href="{{ href }}">{{ label|e }}</a>{% else %}<span>{{ label|e }}</span>{% endif -%}
+</summary><div class="nav-children">
+{%- endmacro -%}
+
+{%- macro menu() -%}
+{#- Home: the pages without section -#}
+{%- for e in site_pages %}{% if not e.section %}
+{{ link(e, loop.index0, t.home if loop.index0 == 0 else none) }}
+{%- endif %}{% endfor -%}
+{#- the sections: those of the settings, then the others in order of their first page -#}
+{%- set order = [] -%}
+{%- for s in cfg.sections or [] %}{% if s not in order %}{% set _ = order.append(s) %}{% endif %}{% endfor -%}
+{%- for e in site_pages %}{% if e.section and e.section not in order %}{% set _ = order.append(e.section) %}{% endif %}{% endfor -%}
+{%- for section in order -%}
+{%- set pages = [] -%}
+{%- for e in site_pages %}{% if e.section == section %}{% set _ = pages.append((e, loop.index0)) %}{% endif %}{% endfor -%}
+{%- if pages -%}
+{%- set opt = (cfg.section or {}).get(section) or {} -%}
+{%- set closed_groups = opt.groups == 'closed' -%}
+{#- the groups of the section, numbered from 1 as they come (a page with no group after a group
+    stays in it); `current`: the one of the current page (0: none) -#}
+{%- set g = namespace(group=none, box=0, current=0, index=none, here=false) -%}
+{%- for e, k in pages -%}
+{%- if e.group and e.group != g.group %}{% set g.group = e.group %}{% set g.box = g.box + 1 %}{% endif -%}
+{%- if k == pageID %}{% set g.current = g.box %}{% set g.here = true %}{% endif -%}
+{%- if g.index is none and is_index(e) %}{% set g.index = e %}{% endif -%}
+{%- endfor %}
+{# every section can be collapsed; one with open: false starts closed unless the current page
+   is in it; the index page is its first entry, labelled Overview -#}
+{{ part('nav-section', section, section, url(g.index) if g.index else none, opt.open is not sameas false or g.here) }}
+{%- set r = namespace(group=none, box=0) -%}
+{%- for e, k in pages -%}
+{%- if e.group and e.group != r.group -%}
+{%- if r.box %}</div></details>{% endif -%}
+{%- set r.group = e.group %}{% set r.box = r.box + 1 -%}
+{#- groups: open (nav-subgroup); with groups: closed, closed except the one of the current
+    page, in the lighter style (nav-group) -#}
+{%- if closed_groups %}
+{{ part('nav-group', section ~ '/' ~ e.group, e.group, none, r.box == g.current) }}
+{%- else %}
+{{ part('nav-subgroup', section ~ '/' ~ e.group, e.group, none, true) }}
+{%- endif -%}
+{%- endif %}
+{{ link(e, k, t.overview if is_index(e) else none,
+        opt.group_link_class if opt.group_link_class and e.group and e.group not in (opt.plain_groups or []) else none) }}
+{%- endfor -%}
+{%- if r.box %}</div></details>{% endif -%}
+</div></details>
+{%- endif -%}
+{%- endfor -%}
+{%- endmacro -%}
+
+{#- previous / next, in the order of the site -#}
+{%- macro pager_link(k, cls, label) -%}
+{%- if 0 <= k < site_pages|length %}
+<a class="pager-link {{ cls }}" href="{{ url(site_pages[k]) }}"><span class="pager-label">{{ label|e }}</span><span class="pager-title">{{ site_pages[k].title|e }}</span></a>
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro pager() -%}
+{{ pager_link(pageID - 1, 'prev', t.previous) }}{{ pager_link(pageID + 1, 'next', t.next) }}
+{%- endmacro -%}

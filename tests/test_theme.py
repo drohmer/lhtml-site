@@ -52,11 +52,23 @@ def test_a_manifest_the_build_cannot_read_is_refused(tmp_path):
                               ({'template': ''}, 'must be a non-empty string'),
                               ({'layout': {'threshold': 2}}, 'a theme does not set threshold'),
                               ({'layout': 'body'}, 'layout must be a mapping'),
-                              ({'not_found': 3}, 'not_found must name the template')):
+                              ({'not_found': 3}, 'not_found must name the template'),
+                              ({'heading_ids': 'slug'}, 'heading_ids must be a mapping'),
+                              ({'heading_ids': {'scheme': 'kebab'}}, 'scheme must be one of'),
+                              ({'heading_ids': {'reserved': 'content'}}, 'reserved must be a list')):
         directory = write(tmp_path / 'bad', **manifest)
         with pytest.raises(ConfigError) as error:
             theme.read(directory)
         assert message in str(error.value)
+
+
+def test_the_ids_of_the_headings_are_the_themes():
+    """The docs theme asks for slugs; the other themes keep the ids of the
+    sites already published."""
+    docs = theme.read(REPO / 'src/lhtml_site/themes/docs')['heading_ids']
+    assert docs['scheme'] == 'slug' and {'content', 'toc', 'site-search'} <= set(docs['reserved'])
+    for name in ('slides', 'slides-pdf', 'webpage-frame'):
+        assert theme.read(REPO / 'src/lhtml_site/themes' / name)['heading_ids']['scheme'] == 'legacy'
 
 
 def test_the_page_is_wrapped_in_the_template_the_theme_declares(tmp_path):

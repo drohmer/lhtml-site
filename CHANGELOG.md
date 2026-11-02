@@ -5,7 +5,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- The `docs` theme speaks the language of the site: `lang: fr` writes its
+  texts in French (buttons, labels, "On this page", previous / next, the
+  404 page...), and `strings:` replaces any of them, key by key
+  (`template/strings.html`, README of the theme). English stays the default.
+- A theme chooses the ids of the headings: `heading_ids: {scheme: slug,
+  reserved: [...]}` in its `theme.yaml` gives readable ids, unique in their
+  page (`## When something goes wrong` -> `#when-something-goes-wrong`,
+  `-2` for a repeated heading, never an id of the theme nor one written by
+  the author). The `docs` theme asks for them; the other themes keep the
+  ids of the sites already published (`when_something_goes__l2`).
+
+### Changed
+- The `docs` theme writes the menu and previous / next in each page at
+  build time (`template/nav.html`, the same menu `js/menu.js` built in the
+  browser): they work without JavaScript and for the crawlers. `js/menu.js`
+  keeps the open / closed state of the menu and scrolls it to the current
+  page. A build with `--only` warns when the menu changed: the pages it does
+  not generate keep the previous one.
+- The `docs` theme: the section of the breadcrumb links to its index page
+  (`section_index`, else `<section>/index.html`), and is plain text, not in
+  the color of a link, when it has none.
+
 ### Fixed
+- The `docs` theme: a link to the other language of the site
+  (`icon-btn lang-switch` in the top bar) stays visible on phones, where
+  the repository link is hidden.
 - `code_include.py`: the repository of `plugin_arg: includeadv: {name: url}`
   is cloned into `code/<name>`, the folder the pages read and the next
   build updates (it was cloned under the name of the repository: the

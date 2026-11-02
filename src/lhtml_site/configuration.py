@@ -40,6 +40,8 @@ RUNTIME_KEYS = frozenset((
     'strict',                       # --strict: the check of the warnings, before the pages are kept
     'loaded_design', 'macros',      # the design (lhtml_site/design.py) and its macros for LHTML
     'heading_ids', 'heading_summary',   # the ids of each page / its headings (lhtml_site/headings.py)
+    'heading_scheme',               # how they are made, as the theme asks: legacy or slug (idem)
+    'menu_in_pages', 'previous_menu',   # the pages hold the menu / the one of --only's other pages (lhtml_site/menu.py)
     'lint_findings',                # {source path: [finding]} of the generated pages (lhtml_site/lint.py)
     'measure',                      # --only: the pages the layout report measures again
     'source_roots',                 # the sources read by each page (lhtml_site/tracking.py)

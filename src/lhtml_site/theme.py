@@ -25,6 +25,10 @@ The manifest:
                                            # (lhtml_site/pdf_export.py), not published
     not_found: 'theme/template/404.html'   # the content of 404.html, the page shown
                                            # for any missing URL (lhtml_site/not_found.py)
+    heading_ids:                           # the ids the build gives to the headings
+      scheme: slug                         # (lhtml_site/headings.py): 'legacy' (the
+      reserved: [content, toc]             # default) or 'slug'; ids of the theme's own
+                                           # elements, that no heading takes
 
 `template` and `not_found` are named as `theme/` followed by their path in
 the theme: the build reads them there, and neither they, template/ nor this
@@ -42,6 +46,11 @@ keeps the last word because it is the one that knows it added a banner.
 `design.yaml` next to it stays what it is - the tokens and the macros an
 author writes with. This file is the contract with the build; that one is
 the vocabulary of the content.
+
+`heading_ids` is the theme's because the ids are its own business: the
+legacy scheme (`when_something_goes__l2`) is what the sites already
+published link to, and stays the default of every theme that does not ask
+for another; a theme made for new sites asks for readable slugs.
 """
 from pathlib import Path
 
@@ -50,8 +59,11 @@ from lhtml_site.filesystem import read_yaml
 
 MANIFEST = 'theme.yaml'
 DEFAULTS = {'template': 'theme/template/base.html', 'content_block': 'content',
-            'toc': None, 'layout': {}, 'export': None, 'not_found': None}
+            'toc': None, 'layout': {}, 'export': None, 'not_found': None,
+            'heading_ids': {'scheme': 'legacy', 'reserved': []}}
 EXPORTS = ('pdf',)
+HEADING_SCHEMES = ('legacy', 'slug')     # lhtml_site/headings.py
+HEADING_KEYS = ('scheme', 'reserved')
 TOC_KEYS = ('file', 'keys')
 # The layout keys a theme may declare: the ones that describe the theme, not
 # the preferences of a project (thresholds, output directory, jobs...).
@@ -74,6 +86,7 @@ def read(theme_directory):
     except ValueError as error:                     # the message names the file
         raise ConfigError(str(error)) from None
     manifest.update(validate(given, file))
+    manifest['heading_ids'] = {**DEFAULTS['heading_ids'], **(given.get('heading_ids') or {})}
     return manifest
 
 
@@ -105,6 +118,15 @@ def validate(given, file):
         keys = toc.get('keys', [])
         if not isinstance(keys, list) or not all(isinstance(k, str) for k in keys):
             raise ConfigError(f'{file}: toc: keys must be a list of page setting names')
+    ids = given.get('heading_ids')
+    if ids is not None:
+        if not isinstance(ids, dict) or set(ids) - set(HEADING_KEYS):
+            raise ConfigError(f"{file}: heading_ids must be a mapping of {', '.join(HEADING_KEYS)}")
+        if ids.get('scheme', 'legacy') not in HEADING_SCHEMES:
+            raise ConfigError(f"{file}: heading_ids: scheme must be one of {', '.join(HEADING_SCHEMES)}")
+        reserved = ids.get('reserved', [])
+        if not isinstance(reserved, list) or not all(isinstance(r, str) for r in reserved):
+            raise ConfigError(f'{file}: heading_ids: reserved must be a list of ids')
     if given.get('export') is not None and given['export'] not in EXPORTS:
         raise ConfigError(f"{file}: export must be one of {', '.join(EXPORTS)} (or absent)")
     layout = given.get('layout', {})

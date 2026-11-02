@@ -22,9 +22,20 @@ gets its own.
 The ids of the headings written as text are unique in the site; a --only
 build counts those of the pages it does not generate, recorded by the
 previous build in .verification/ (build state, not published: HEADINGS).
+
+Two schemes, chosen by the theme (theme.yaml, `heading_ids: scheme:`,
+lhtml_site/theme.py). 'legacy', the default, is the scheme above
+(generate_new_id): the sites already published link to these ids
+(`when_something_goes__l2`), so a theme that does not ask keeps them. 'slug'
+gives readable ids (slug: `when-something-goes-wrong`), unique in their page
+only (`-2`, `-3`... for a repeated heading), never one of the ids the theme
+reserves for its own elements (`heading_ids: reserved:`) nor one written by
+the author in the page.
 """
+import html
 import re
 import json
+import unicodedata
 from pathlib import Path
 
 from lhtml_site import markdown_page, source_scan
@@ -33,6 +44,7 @@ from lhtml_site.source_map import strip as strip_markers
 from lhtml_site.generator_tool import RAW_MARKERS
 from lhtml_site.pages import markup
 from lhtml_site.structure import built_pages, page_path, structure, template_path
+from lhtml_site.theme import of as theme_manifest
 
 # The headings of each page, as text: {page: [{level, title, id}]}, under
 # .verification/<scope>/ next to the dependency store. Sites built by 1.0
@@ -83,6 +95,46 @@ def generate_new_id(text, id_storage):
         return text_id + '_id' + str(id_storage[text_id])
     id_storage[text_id] = 1
     return text_id
+
+
+# slug: the letters that Unicode does not decompose into a Latin letter and
+# an accent (NFKD), written as their usual Latin spelling
+SLUG_LETTERS = {'œ': 'oe', 'æ': 'ae', 'ß': 'ss', 'ø': 'o', 'đ': 'd', 'ð': 'd', 'ł': 'l', 'þ': 'th', 'ı': 'i'}
+SLUG_APOSTROPHES = re.compile(r"['\u2019\u02bc]")
+SLUG_EMPTY = 'section'          # the slug of a heading with no letter nor digit
+
+
+def slug(text):
+    """The readable id of a heading text (scheme 'slug'): lower case, the
+    accents of Latin letters removed (`Vue d'ensemble` -> `vue-densemble`,
+    `Cœur` -> `coeur`), the words of letters and digits joined by '-', any
+    other character dropped (apostrophes inside a word, as GitHub does), never
+    truncated. A letter of another script is kept as it is (a URL fragment
+    may hold it): a heading in Greek or Chinese keeps a readable id rather
+    than none. The Jinja markers ({% raw %}), tags and entities of the text
+    are removed first."""
+    text = html.unescape(re.sub(r'</?[A-Za-z][^<>]*>', '', RAW_MARKERS.sub('', text)))
+    text = SLUG_APOSTROPHES.sub('', unicodedata.normalize('NFKD', text.lower()))
+    text = ''.join(SLUG_LETTERS.get(c, c) for c in text if not unicodedata.combining(c))
+    return '-'.join(re.findall(r'[^\W_]+', text)) or SLUG_EMPTY
+
+
+def slug_unique(text, taken):
+    """The slug of a heading, unique among the ids of its page (`taken`,
+    completed): `-2`, `-3`... for the next ones."""
+    base = slug(text)
+    candidate, k = base, 1
+    while candidate in taken:
+        k += 1
+        candidate = f'{base}-{k}'
+    taken.add(candidate)
+    return candidate
+
+
+def scheme(meta):
+    """The scheme of the ids of the build and the ids its theme reserves."""
+    ids = theme_manifest(meta)['heading_ids']
+    return ids.get('scheme') or 'legacy', set(ids.get('reserved') or ())
 
 
 def markdown_headings(text):
@@ -138,12 +190,15 @@ def page_unique_id(text, level, taken):
 def jinja_filter(meta):
     """The filter JINJA_FILTER: the id of a heading from its text as Jinja
     rendered it, unique in its page (the ids of the page are those this
-    stage wrote, meta['heading_ids'])."""
+    stage wrote, meta['heading_ids']), in the scheme of the theme."""
     def heading_id(text, level, page, is_markdown=False):
         text = strip_markers(str(text))
         if is_markdown:
             text = markdown_page.plain(text)
-        return page_unique_id(text, level, meta.setdefault('heading_ids', {}).setdefault(page, set()))
+        taken = meta.setdefault('heading_ids', {}).setdefault(page, set())
+        if meta.get('heading_scheme') == 'slug':
+            return slug_unique(text, taken)
+        return page_unique_id(text, level, taken)
     return heading_id
 
 
@@ -151,6 +206,8 @@ def run(meta):
     meta['heading_ids'], meta['heading_summary'] = {}, None
     if not meta.get('title_id', True):          # title_id: false in the configuration
         return
+    meta['heading_scheme'], reserved = scheme(meta)
+    slugs = meta['heading_scheme'] == 'slug'
     pages = structure(meta)
     built = {page_path(entry) for entry in built_pages(meta)}
     previous = previous_summary(meta) if len(built) < len(pages) else {}   # --only: the other pages
@@ -163,7 +220,7 @@ def run(meta):
         if page_key not in built:
             # Ids are unique in the site: count those of the pages not generated
             summary[page_key] = previous.get(page_key, [])
-            for heading in summary[page_key]:
+            for heading in summary[page_key] if not slugs else ():     # slugs: unique in their page
                 generate_new_id(heading['title'], id_storage)
             continue
         file_path = template_path(meta, entry)
@@ -181,12 +238,21 @@ def run(meta):
         parts, position = [], 0
         found = (markdown_headings(file_content) if markdown
                  else lhtml_headings(file_content, meta.get('macros')))
+        if slugs:
+            # a slug never takes the id of an element of the theme, nor one
+            # the author wrote further down the page
+            taken.update(reserved)
+            for _, _, _, class_id, _ in found:
+                taken.update(WRITTEN_ID.findall(class_id))
         for start, end, level, class_id, written in found:
             title = strip_markers(markdown_page.plain(written) if markdown else written)
-            # Every heading counts, as in 1.0: the ids of the headings
-            # written as text stay those of the sites already published
-            generated_id = generate_new_id(title, id_storage) + '_l' + str(level)
             jinja = has_jinja(written)
+            if slugs:
+                generated_id = slug_unique(title, taken) if not (class_id or jinja) else None
+            else:
+                # Every heading counts, as in 1.0: the ids of the headings
+                # written as text stay those of the sites already published
+                generated_id = generate_new_id(title, id_storage) + '_l' + str(level)
             summary[page_key].append({'level': str(level), 'title': title,
                                       'id': None if jinja and not class_id else (class_id[1:] if class_id else generated_id)})
             if class_id:                        # written by hand: kept as written

@@ -12,6 +12,11 @@ A theme with no `toc:` gets no menu written, and that is how it says it has
 none. The file is read from the theme and written into the site, never read
 back from the site: a partial build (--only) does not copy the theme, so the
 copy in the site no longer holds the `{{TOC}}` placeholder.
+
+A theme may also write the menu in each page, from the same entries
+(`site_pages` in its templates, lhtml_site/generate.py: the docs theme). A
+partial build then leaves the previous menu in the pages it does not
+generate: when the menu changed (a title, a section), it says so.
 """
 import json
 import os
@@ -47,6 +52,20 @@ def table_of_contents(meta, manifest):
     return toc
 
 
+def remember(meta):
+    """--only: the menu file the previous build wrote, read before the build
+    refreshes the files of the theme the pages use (lhtml_site/dependencies.py)."""
+    toc_file = (theme_manifest(meta).get('toc') or {}).get('file')
+    meta['previous_menu'] = None
+    if not meta.get('only') or not toc_file:
+        return
+    try:
+        with open(os.path.join(meta['site_directory'], 'theme', toc_file), 'r', encoding='utf-8') as fid:
+            meta['previous_menu'] = fid.read()
+    except OSError:
+        pass
+
+
 def run(meta):
     """Write the theme's menu file into the site, with the table of contents
     in place of its placeholder. Does nothing for a theme with no menu."""
@@ -58,7 +77,11 @@ def run(meta):
     target = os.path.join(meta['site_directory'], 'theme', toc_file)
     with open(source, 'r', encoding='utf-8') as fid:
         content = fid.read()
-    content = content.replace(PLACEHOLDER, json.dumps(table_of_contents(meta, manifest)))
+    toc = json.dumps(table_of_contents(meta, manifest))
+    if meta.get('only') and meta.get('menu_in_pages') and toc not in (meta.get('previous_menu') or ''):
+        meta['log'].warning('--only: the menu changed (a title, a section...); the pages not generated '
+                            'show the previous one until the next full build')
+    content = content.replace(PLACEHOLDER, toc)
     os.makedirs(os.path.dirname(target), exist_ok=True)
     with open(target, 'w', encoding='utf-8', newline='\n') as fid:
         fid.write(content)

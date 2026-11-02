@@ -99,7 +99,10 @@ def test_the_configuration_is_checked(tmp_path, value, problem):
 
 @pytest.mark.parametrize('name', ['webpage-frame', 'slides', 'slides-pdf', 'docs'])
 def test_each_template_loads_the_css_only_when_the_formulas_are_rendered_at_build(name):
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(THEMES / name / 'template'))
+    # as the build loads them: the templates of the theme also as theme/... (lhtml_site/generate.py)
+    env = jinja2.Environment(loader=jinja2.ChoiceLoader([
+        jinja2.FileSystemLoader(THEMES / name / 'template'),
+        jinja2.PrefixLoader({'theme': jinja2.FileSystemLoader(THEMES / name)})]))
     template = env.get_template('base.html')
     built = template.render(page={'math': True, 'math_render': 'build'}, pathToRoot='', pageID=1)
     assert 'katex.min.css' in built and 'katex.min.js' not in built and 'auto-render' not in built
