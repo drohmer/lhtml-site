@@ -175,7 +175,7 @@ each build, the slides in the browser and the PDF, declare two targets:
   from).
 - A documentation site with sections, search and an "On this page" column:
   `lhtml-site init my-docs --theme docs` (a few pages to start from; settings,
-  overlay and search: [themes/docs/README.md](src/lhtml_site/themes/docs/README.md)).
+  overlay and search: [the docs theme](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/themes/docs/README.md)).
 - *You already have your pages* in a directory `src/`: in the directory that
   contains `src/`, run `lhtml-site init --theme slides`. It writes only
   `configure.yaml` there; nothing else is created or changed.
@@ -186,7 +186,7 @@ The theme is the `--theme` of `init`, or the key `theme:` of
 | Theme | For | Needs |
 |---|---|---|
 | `webpage-frame` (default) | Web pages: documentation, a course website, with a navigation menu | nothing more |
-| `docs` | A documentation site: top bar with search, menu by section and group, "On this page", breadcrumb, previous / next, light and dark | the search index: [Pagefind](src/lhtml_site/themes/docs/README.md#search), after the build |
+| `docs` | A documentation site: top bar with search, menu by section and group, "On this page", breadcrumb, previous / next, light and dark | the search index: [Pagefind](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/themes/docs/README.md#search), after the build |
 | `slides` | Slides shown in the browser, 1920x1080, one page per slide | nothing more |
 | `slides-pdf` | The same slides, exported to a PDF, with an image of each slide | Playwright and its Chromium: see [PDF export](#pdf-export) |
 
@@ -264,26 +264,18 @@ In a virtual environment or a checkout, `pip install matplotlib numpy` (and
 
 ### Formulas
 
-The themes render the formulas of a page (`\(...\)`, `\[...\]`, `$$...$$`, outside code)
-with KaTeX. With `quickjs` installed (`pip install "lhtml-site[math]"`, or
-`pipx inject lhtml-site quickjs`), the build renders them: the KaTeX of the theme runs in
-QuickJS, a JavaScript interpreter of about 1 MB (no Node, no browser), and the page gets
-the KaTeX HTML and MathML of each formula and `katex.min.css`, without any KaTeX script:
-no TeX source shown while the page loads, and nothing for the PDF export or the layout
-report to wait for. Without it, the page loads KaTeX and renders its formulas in the
-browser, and the build says so in one line. `quickjs` has wheels up to Python 3.12; on a
-newer Python pip compiles it, which needs a C compiler (Xcode command line tools, gcc,
-Visual Studio Build Tools).
+The themes render the formulas of a page with KaTeX: in the browser, or at build when `quickjs`
+is installed (no TeX source shown while the page loads, nothing for the PDF export to wait for):
 
-```yaml
-katex:
-  render: build                        # or browser: always in the browser
-  macros: {'\RR': '\mathbb{R}'}       # for KaTeX, at build and in the browser
+```bash
+pipx inject lhtml-site quickjs                   # after pipx
+pip install "lhtml-site[math]"                   # in a virtual environment or a checkout
 ```
 
-A formula that KaTeX cannot read is shown in red and is a warning of the build, at the
-line of the page (an error with `--strict`). The formulas rendered are kept in
-`.verification/katex.json`, the next build only renders the new ones.
+`quickjs` has wheels up to Python 3.12; on a newer Python pip compiles it, which needs a C
+compiler (Xcode command line tools, gcc, Visual Studio Build Tools). How the formulas are found
+and rendered, and the setting `katex:`, are in
+[Formulas](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#formulas) of the reference.
 
 ### PDF export
 
@@ -308,8 +300,8 @@ may also ask for the system libraries of Chromium:
 `playwright install-deps chromium`. The configuration key `chrome` names a
 Chromium or Chrome already installed, to use instead of the download.
 
-How the export waits for each slide is in the
-[reference](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#pdf-export).
+What the export writes and how it waits for each slide are in
+[PDF export](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#pdf-export) of the reference.
 
 ## From a checkout
 
@@ -351,17 +343,23 @@ The tests, the locked dependencies and the layout of the repository are in
   and the comments on the render,
   the [configuration](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#configuration),
   [decks and targets](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#decks-and-targets),
+  the [order of the slides](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#deck-order-of-the-slides),
   [Markdown pages](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#markdown-pages),
   [template variables](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#template-variables),
-  the [order of the slides](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#deck-order-of-the-slides),
-  [themes](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#theme-what-it-declares-about-the-build),
-  the [PDF export](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#pdf-export),
+  [heading ids](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#heading-ids),
+  the [themes](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#themes),
   the [design](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#design-tokens-macros-and-layouts)
-  (tokens, macros, layouts), [credits and figures in code](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#credits-origin-of-the-slides-figures-in-code),
-  [plugins](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#plugins),
-  the [layout report](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#layout-report-llm-assisted-slide-layout),
-  [error reporting](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#error-reporting),
-  and [migrating from static_website_lhtml](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#migrating-from-the-previous-layout).
+  (tokens, macros, layouts), [formulas](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#formulas),
+  the [PDF export](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#pdf-export), [videos](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#videos),
+  [credits and figures in code](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#credits-origin-of-the-slides-figures-in-code)
+  and [error reporting](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md#error-reporting).
+- [Advanced](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md):
+  [what a theme declares](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md#theme-what-it-declares-about-the-build),
+  the [stages of the build](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md#pipeline),
+  [plugins](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md#plugins),
+  the [layout report](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md#layout-report-llm-assisted-slide-layout),
+  and [migrating from static_website_lhtml](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md#migrating-from-static_website_lhtml).
+- [The docs theme](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/themes/docs/README.md): its settings, languages, 404 page and search.
 - [Writing slides with an AI agent](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/agents.md):
   the procedure an agent follows (each build copies it into `.structure/agents.md`).
 - [LHTML](https://github.com/drohmer/lhtml): the markup of the pages.

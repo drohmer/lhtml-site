@@ -44,7 +44,7 @@ math: true               # optional: load KaTeX (default: when the page writes f
 - The h2 of a page, and any element with an `id` and a `data-toc` attribute (its label), are
   listed in "On this page".
 - Headings get readable ids, unique in their page: `## When something goes wrong` ->
-  `#when-something-goes-wrong` (see "Heading ids" below).
+  `#when-something-goes-wrong` (see [Heading ids](#heading-ids) below).
 - A figure that opens full size on click:
   `<figure class="figure"><a class="figure-zoom" href="a.svg"><img src="a.svg" alt="..."></a><figcaption>...</figcaption></figure>`.
   The width of the image can be set by the CSS variable `--fig-w` (style attribute).
@@ -56,7 +56,8 @@ math: true               # optional: load KaTeX (default: when the page writes f
   scripts, and shows no TeX source while it loads. Otherwise, or with
   `katex: {render: browser}` in `configure.yaml`, KaTeX renders them in the browser
   (`page.math_render` says which, for a template). Macros for both:
-  `katex: {macros: {'\RR': '\mathbb{R}'}}` (README of lhtml-site, "Formulas").
+  `katex: {macros: {'\RR': '\mathbb{R}'}}` (see [Formulas](../../docs/reference.md#formulas) in the
+  reference of lhtml-site).
 
 ## Settings
 
@@ -65,34 +66,45 @@ All optional, under the `docs` keyword of `configure.yaml`:
 ```yaml
 keywords:
   docs:
-    name: CGP                        # top bar (default 'Docs')
-    sub: docs                        # smaller, after the name
-    title: CGP docs                  # after the page title in the browser tab (not on the first page)
-    logo: assets/logo.svg            # an image, relative to the root of the site
-    logo_svg: '<svg ...>...</svg>'   # or inline SVG markup (it can use currentColor: the accent color)
-    repo_url: https://github.com/me/project   # a repository link (GitHub icon) in the top bar
-    repo_label: The project on GitHub
-    footer: Built with lhtml-site.   # no footer without it
-    search_placeholder: Search the docs
-    lang: en                         # <html lang>, and the language of the texts of the theme (en, fr)
-    strings:                         # any text of the theme, over those of `lang` (template/strings.html)
-      copy: Copy code
-    storage: docs                    # prefix of the localStorage keys <storage>-theme, <storage>-menu-open
-    section_index:                   # breadcrumb: the section and group link to these pages
-      How-to: how-to/index.html      # (group anchor: the id of the group's heading there, its slug)
-    css: [theme/css/extra.css]       # stylesheets loaded after the docs.css of the theme
-    js: [theme/js/extra.js]          # scripts run after the site.js of the theme
+    name: My project
+    sub: docs
+    title: My project docs
+    logo_svg: '<svg ...>...</svg>'
+    repo_url: https://github.com/me/project
+    footer: Built with lhtml-site.
+    lang: en
+    css: [assets/extra.css]
     menu:
-      sections: [Get started, How-to, Reference]   # order of the sections
-      home_label: Home
-      index_label: Overview
+      sections: [Get started, How-to, Reference]
       section:
         Reference:
-          open: false                # starts closed, unless the current page is in it
-          groups: closed             # its groups start closed (lighter style); default open
-          group_link_class: mono     # an extra class on the links of its groups
-          plain_groups: [Other]      # groups whose links do not get that class
+          open: false
 ```
+
+| Key | Default | Effect |
+|-----|---------|--------|
+| <a id="docs-name"></a>`name` | `Docs` | The name in the top bar |
+| <a id="docs-sub"></a>`sub` | none | Smaller, after the name |
+| <a id="docs-title"></a>`title` | none | After the page title in the browser tab (not on the first page) |
+| <a id="docs-logo"></a>`logo` | none | An image before the name, relative to the root of the site |
+| <a id="docs-logo_svg"></a>`logo_svg` | none | Or inline SVG markup (it can use `currentColor`: the accent color) |
+| <a id="docs-repo_url"></a>`repo_url` | none | A repository link (GitHub icon) in the top bar |
+| <a id="docs-repo_label"></a>`repo_label` | `Repository` (in the language of `lang`) | The label of that link |
+| <a id="docs-footer"></a>`footer` | none: no footer | The footer of each page (HTML is kept) |
+| <a id="docs-search_placeholder"></a>`search_placeholder` | `Search the docs` (in the language of `lang`) | The placeholder of the search box |
+| <a id="docs-lang"></a>`lang` | `en` | `<html lang>`, and the language of the texts of the theme (`en`, `fr`): see [Languages](#languages) |
+| <a id="docs-strings"></a>`strings` | none | Any text of the theme, by key, over those of `lang` (`strings: {copy: Copy code}`): see [Languages](#languages) |
+| <a id="docs-storage"></a>`storage` | `docs` | The prefix of the localStorage keys, `<storage>-theme` and `<storage>-menu-open` |
+| <a id="docs-section_index"></a>`section_index` | `<section>/index.html` | Breadcrumb: the page each section (and group) links to, `{How-to: how-to/index.html}`; a group links to the id of its heading there, its slug |
+| <a id="docs-css"></a>`css` | `[]` | Stylesheets loaded after the `docs.css` of the theme, as paths from the root of the site |
+| <a id="docs-js"></a>`js` | `[]` | Scripts run after the `site.js` of the theme, as paths from the root of the site |
+| <a id="docs-menu-sections"></a>`menu: sections` | the order of their first page | The order of the sections of the menu; the others follow |
+| <a id="docs-menu-home_label"></a>`menu: home_label` | `Home` (in the language of `lang`) | The label of the first page when it has no section |
+| <a id="docs-menu-index_label"></a>`menu: index_label` | `Overview` (in the language of `lang`) | The label of the index page of a section |
+| <a id="docs-menu-section-open"></a>`menu: section: <name>: open` | `true` | `false`: the section starts closed, unless the current page is in it |
+| <a id="docs-menu-section-groups"></a>`menu: section: <name>: groups` | open | `closed`: its groups start closed (lighter style) |
+| <a id="docs-menu-section-group_link_class"></a>`menu: section: <name>: group_link_class` | none | An extra class on the links of its groups (`mono`) |
+| <a id="docs-menu-section-plain_groups"></a>`menu: section: <name>: plain_groups` | `[]` | Groups whose links do not get that class |
 
 ## Languages
 
@@ -134,7 +146,8 @@ generated id takes it, nor one of the ids of the theme (`content`, `toc`, `sideb
 | `Vue d'ensemble` | `vue-densemble` |
 | `std::vector, exemples` | `std-vector-exemples` |
 
-The other themes keep the ids of the sites already published (`only_lhtml?_l2`).
+The other themes keep the ids of the sites already published (`only_lhtml?_l2`, the `legacy`
+scheme): see [Heading ids](../../docs/reference.md#heading-ids) in the reference of lhtml-site.
 
 ## The 404 page
 
@@ -143,11 +156,11 @@ project page, or a whole URL such as `https://example.org/docs/`), the build wri
 at the root of the site:
 
 ```yaml
-base_url: /cgp-doc/
+base_url: /my-project/
 ```
 
-- A server shows it at the URL that was asked for, at any depth (`/cgp-doc/a/b/c/`): its links
-  start from `base_url` (`/cgp-doc/theme/css/docs.css`) instead of being relative. The other
+- A server shows it at the URL that was asked for, at any depth (`/my-project/a/b/c/`): its links
+  start from `base_url` (`/my-project/theme/css/docs.css`) instead of being relative. The other
   pages keep their relative links. Without `base_url`, no `404.html` is written.
 - It holds a message, a search box, the sections of the menu and, when one is close enough,
   the page of the menu that looks like the URL asked for ("Did you mean ...?", `js/not_found.js`).
@@ -157,15 +170,16 @@ base_url: /cgp-doc/
   (`data-pagefind-ignore`), and has `<meta name="robots" content="noindex">`. A template sees
   it as `page.not_found`.
 - GitHub Pages and Netlify serve `404.html` by themselves; for nginx:
-  `error_page 404 /cgp-doc/404.html;`, for Apache: `ErrorDocument 404 /cgp-doc/404.html`.
+  `error_page 404 /my-project/404.html;`, for Apache: `ErrorDocument 404 /my-project/404.html`.
 
 ## An overlay
 
 A project restyles or extends the theme without copying it: copy the bundled theme into a
 directory of the project, add its own files over it, and point `theme:` at that directory.
-For example `renderers/lhtml/build.py` of the CGP documentation copies
-`lhtml_site/themes/docs`, then its own `css/cgp.css` and `js/cgp.js`, and the settings load
-them (`css:`, `js:`).
+For example, a build script copies `lhtml_site/themes/docs` into the project, then its own
+`css/extra.css` and `js/extra.js` over it, and the settings load them (`css:`, `js:`). A lighter
+way needs no copy: put the files in the sources (`src/assets/extra.css`) and name them in
+`css:` and `js:`.
 
 - **Styles**: every color and size of `css/docs.css` is a variable on `:root`
   (`--accent`, `--bg`, `--text`, `--content-w`, `--wide-w`, `--sidebar-w`,

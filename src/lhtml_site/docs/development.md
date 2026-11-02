@@ -1,7 +1,7 @@
 # lhtml-site: development
 
 The layout of the repository and the tests. The use of the generator is in the
-[README](../../../README.md) and the [reference](reference.md).
+[README](../../../README.md), the [reference](reference.md) and [advanced use](advanced.md).
 
 ## Project Structure
 
@@ -61,7 +61,7 @@ lhtml-site/
       webpage-frame/       #   and, for the slides, design.yaml (tokens, macros)
       slides/              # Presentation slides theme
       slides-pdf/          # PDF export slides theme
-    docs/                  # reference.md, development.md, and agents.md: procedure for AI agents
+    docs/                  # reference.md, advanced.md, development.md, and agents.md: procedure for AI agents
                            #   writing slides (copied into .structure/)
     starters/              # The pages lhtml-site init copies into src/: slides/, site/
     example/               # Complete demo (a course, with videos): in the checkout, not in the

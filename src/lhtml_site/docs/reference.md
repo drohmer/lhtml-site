@@ -1,46 +1,55 @@
 # lhtml-site: reference
 
-The detailed reference of lhtml-site: the command, the configuration, decks, themes, the design,
-plugins and the layout report. To start, see [Getting started](../../../README.md#getting-started-your-first-slides)
-in the README.
+The reference of lhtml-site for everyday use: the command, the configuration, decks and targets,
+the template variables, the heading ids, the design, formulas, the PDF export and the error
+messages. To start, see [Getting started](../../../README.md#getting-started-your-first-slides);
+to install, [Installation](../../../README.md#installation). Theme declarations, plugins, the
+stages of the build, the layout report and the migration from static_website_lhtml are in
+[lhtml-site: advanced](advanced.md).
 
-## CLI Options
+## CLI options
 
 ```
-lhtml-site [-i config.yaml] [-v] [-d | --no-debug] [--strict] [-c] [--only POINTER] [--target NAME] [--lint] [--check-config] [--layout] [--render FILE] [--deck FILE] [--scaffold] [--serve] [--watch] [--port PORT] [-V]
+lhtml-site [-h] [-d | --no-debug] [-v] [--strict] [-c] [-i INPUT_CONFIG] [--only POINTER]
+           [--target NAME] [--lint] [--check-config] [--layout] [--render FILE] [--deck FILE]
+           [--scaffold] [--serve] [--watch] [--port PORT] [-V]
 lhtml-site init [DIR] [--theme NAME]
 lhtml-site doctor
-
-  -i, --input_config   YAML configuration file (default: configure.yaml)
-  -v, --verbose        Display the stages of the build, their time, and what they did
-  -d, --debug          Display debug info (tracebacks) and keep temporary files
-      --strict         A warning fails the build (exit code 1), as an error does
-      --no-debug       Override debug: true from YAML
-      --check-config   Validate paths and plugin files; display resolved settings
-  -c, --clean          Remove only the configured output directory and exit
-  --only POINTER       Generate only these pages in the existing site (see below; repeatable)
-  --target NAME        Build only these targets of the configuration (repeatable, or html,pdf;
-                       all of them by default; see Decks and targets)
-  --lint               List the values written by hand in the pages, with the layout or macro
-                       replacing them (see Design); no generation (with --only: some pages)
-  --serve              Serve the generated site on http://127.0.0.1:8000/
-  --watch              Rebuild after source, theme, plugin or configuration edits
-  --port PORT          HTTP port (default: 8000; 0 selects an available port)
-  -V, --version        Display the version of lhtml-site and of the LHTML it runs
-  --layout             Write a layout report of each page in .layout/ (see below)
-  --render FILE        Render a file as PNG as the slides draw it (an SVG or image at its size,
-                       at most the slide; an HTML page at the size of the slide) in
-                       .layout/render/ (files outside the project: _outside/); no build
-  --deck FILE          Order of the slides: deck file replacing the 'deck' of the configuration
-                       (relative to the current directory, else to the configuration file)
-  --scaffold           Create the source of the deck slides that do not exist yet
-  init [DIR]           Write configure.yaml in DIR (default: the current directory): its pages in
-                       src/ if it has one, else pages to start from copied into src/ (four slides
-                       for the slides themes, two pages for webpage-frame, three sections for
-                       docs); --theme NAME (default webpage-frame, see Getting started)
-  doctor               Say what each optional feature (PDF export, layout report, videos, SASS,
-                       figures) finds and lacks, with the command that installs it; changes nothing
 ```
+
+`lhtml-site` builds the project of the current directory (its `configure.yaml`), or the one of
+`-i`. `lhtml-site --help` prints the same list.
+
+| Flag | Argument | Default | Effect | See |
+|------|----------|---------|--------|-----|
+| <a id="opt-input_config"></a>`-i`, `--input_config` | FILE | `configure.yaml` | The configuration file of the project; relative paths in it are read from its directory | [Configuration](#configuration) |
+| <a id="opt-verbose"></a>`-v`, `--verbose` | | off | Display the stages of the build, their time, and what they did | [Error reporting](#error-reporting) |
+| <a id="opt-debug"></a>`-d`, `--debug` | | `debug:` of the configuration (false) | Display debug information (tracebacks) and keep temporary files (the staging directory of a failed build) | [Error reporting](#error-reporting) |
+| <a id="opt-no-debug"></a>`--no-debug` | | | Turn off a `debug: true` of the configuration | |
+| <a id="opt-strict"></a>`--strict` | | off | A warning fails the build (exit code 1), as an error does | [Error reporting](#error-reporting) |
+| <a id="opt-clean"></a>`-c`, `--clean` | | | Remove the site directory of the configuration, and exit: nothing is built, and the sources and the theme need not exist | [Configuration](#configuration) |
+| <a id="opt-check-config"></a>`--check-config` | | | Validate the configuration, the paths, the plugin files, the deck and the design, and print the resolved settings (one YAML document per build); nothing is built nor removed, and it wins over `--clean` | [Configuration](#configuration) |
+| <a id="opt-only"></a>`--only` | POINTER | all the pages | Generate only these pages (deck pointers: directory, file, glob, `name:path`) in the existing site; a full build when the pages of the site changed. Repeatable | [Generating some pages](#generating-some-pages---only) |
+| <a id="opt-target"></a>`--target` | NAME | all the targets | Build only these targets of the configuration. Repeatable, or `html,pdf` | [Decks and targets](#decks-and-targets) |
+| <a id="opt-lint"></a>`--lint` | | | List the values written by hand in the pages (positions, spacers, font sizes), with the layout or macro of the design that replaces them; no generation (with `--only`: some pages) | [Design](#design-tokens-macros-and-layouts) |
+| <a id="opt-layout"></a>`--layout` | | | Build, then write a layout report of each page in `.layout/` (needs Playwright: `lhtml-site doctor`) | [Layout report](advanced.md#layout-report-llm-assisted-slide-layout) |
+| <a id="opt-render"></a>`--render` | FILE | | Render a file as PNG as the slides draw it (an SVG or image at its size, at most the slide; an HTML page at the size of the slide) in `<layout output>/render/` (`.layout/render/`; a file outside the project goes to `_outside/`); no build. Repeatable; used alone | [Layout report](advanced.md#layout-report-llm-assisted-slide-layout) |
+| <a id="opt-deck"></a>`--deck` | FILE | `deck:` of the configuration | A deck file (order of the slides) replacing the deck of the configuration; relative to the current directory, else to the configuration file | [Deck](#deck-order-of-the-slides) |
+| <a id="opt-scaffold"></a>`--scaffold` | | | Create the source of the deck slides that do not exist yet (entries with a `title`) | [Deck](#deck-order-of-the-slides) |
+| <a id="opt-serve"></a>`--serve` | | | Build, then serve the site on `http://127.0.0.1:<port>/` (localhost only), with the comments on the render | [Local preview](#local-preview) |
+| <a id="opt-watch"></a>`--watch` | | | Rebuild after each edit of the sources, theme, plugins or configuration | [Local preview](#local-preview) |
+| <a id="opt-port"></a>`--port` | PORT | `8000` | The port of `--serve`; `0` selects a free one | [Local preview](#local-preview) |
+| <a id="opt-version"></a>`-V`, `--version` | | | Print the version of lhtml-site and of the LHTML it runs | |
+| <a id="opt-help"></a>`-h`, `--help` | | | Print the options | |
+
+`--serve` and `--watch` do not go with `--clean` or `--check-config`, nor `--only` with
+`--clean` or `--check-config`, nor `--lint` with `--clean`, `--check-config`, `--serve` or
+`--watch`; `--render` is used alone.
+
+| Command | Argument | Default | Effect | See |
+|---------|----------|---------|--------|-----|
+| <a id="cmd-init"></a>`lhtml-site init` | DIR, `--theme NAME` | the current directory, `webpage-frame` | Write `configure.yaml` in DIR (created if needed): its pages are those of `src/` if it has one, else pages to start from are copied into `src/` (four slides for `slides` and `slides-pdf`, two pages for `webpage-frame`, three sections for `docs`). NAME is one of `webpage-frame`, `docs`, `slides`, `slides-pdf` | [Themes](#themes), [Getting started](../../../README.md#getting-started-your-first-slides) |
+| <a id="cmd-doctor"></a>`lhtml-site doctor` | | | Say what each optional feature (PDF export, layout report, formulas rendered at build, videos, SASS, figures in code, code of other repositories, tidy) finds and lacks, with the command that installs it; changes nothing | [Optional features](../../../README.md#optional-features) |
 
 ## Local preview
 
@@ -99,10 +108,67 @@ plugin: []                             # Extensions, in order (none by default)
 ```
 
 `lhtml-site init` writes a `configure.yaml` that explains each of the usual
-options, ready to uncomment (the file is `src/lhtml_site/configure_example.yaml`).
+options, ready to uncomment (the file is
+[`src/lhtml_site/configure_example.yaml`](../configure_example.yaml)).
 
-**The site is published; the documents of a project are not.** The site
-holds the pages, the assets and the theme, without its Jinja templates
+> **Note: `source_directory`.** `lhtml-site init` writes `source_directory: 'src/'`, and every
+> tutorial uses `src/`. A configuration **without** the key reads its pages from `src_site/`, the
+> default of the generator: write the key.
+
+### Configuration keys
+
+All the keys are optional. An unknown key is ignored with a warning (and a spelling
+suggestion); the authoritative list and defaults are `Config` in
+[`lhtml_site/configuration.py`](../configuration.py).
+
+| Key | Type | Default | Effect |
+|-----|------|---------|--------|
+| <a id="key-source_directory"></a>`source_directory` | path | `src_site/` (see the note above) | The pages: `.html.j2` (LHTML) and `.md.j2` ([Markdown](#markdown-pages)) templates, with their assets |
+| <a id="key-site_directory"></a>`site_directory` | path | `.site/` | The site, replaced at each build that succeeds; it must not overlap the sources nor the theme (see below) |
+| <a id="key-theme"></a>`theme` | name or path | `webpage-frame` | A theme of the generator, named alone (`webpage-frame`, `docs`, `slides`, `slides-pdf`), or the directory of a theme, relative to the configuration file. Not with `targets`. See [Themes](#themes) |
+| <a id="key-plugin"></a>`plugin` | list of paths (or one path) | `[]` | The extensions of the project, in order; everything a bundled theme needs is a stage of the build. See [Plugins](advanced.md#plugins) |
+| <a id="key-plugin_arg"></a>`plugin_arg` | mapping | `{}` | The options of the plugins, by name (`context.options` of a plugin) |
+| <a id="key-keywords"></a>`keywords` | mapping | `{}` | Extra Jinja2 variables of every page (`params`, `page`, `credit`, `credits` are reserved). Some are settings of the theme: `docs:` ([the docs theme](../themes/docs/README.md#settings)), `css`, `cssAbs`, `js`, `jsAbs` ([stylesheets and scripts](#stylesheets-and-scripts-of-the-pages)) |
+| <a id="key-debug"></a>`debug` | boolean | `false` | Verbose logging and retained intermediate files; overridden by `--debug` / `--no-debug` |
+| <a id="key-title_id"></a>`title_id` | boolean | `true` | Give the headings ids, a stage of the build; `false` for a project that writes its own. See [Heading ids](#heading-ids) |
+| <a id="key-use_tidy"></a>`use_tidy` | boolean | `false` | Clean the HTML of the pages with tidy (the library `libtidy`) |
+| <a id="key-line-breaks"></a>`line-breaks` | boolean | `false` | The line breaks of the sources are rendered as `<br>` (LHTML's option; `line_breaks` is read too) |
+| <a id="key-public_page_keys"></a>`public_page_keys` | list of strings | `[]` | The page settings (of a `config.yaml`, a front matter or a deck entry) kept in the record of the pages, beyond the ones the themes display: for a custom theme or plugin that reads `structure/` of the site (`publish_structure: true`). `src`, the path of a source on your machine, is refused. See [The site is published](#the-site-is-published-the-documents-of-a-project-are-not) |
+| <a id="key-publish_sitemap"></a>`publish_sitemap` | boolean | `false` | Write `sitemap/` into the site: a redirection per page, named after its title id, marked `noindex` |
+| <a id="key-publish_structure"></a>`publish_structure` | boolean | `false` | Write the pages of the site into `structure/structure.{json,yaml}` of the site, for a custom theme or plugin that reads them there (the build keeps its own record in `.verification/structure.json`) |
+| <a id="key-deck"></a>`deck` | path, list or mapping | none: the order of the files | The order of the pages: the path of a deck file, or the deck itself. See [Deck](#deck-order-of-the-slides) |
+| <a id="key-decks"></a>`decks` | `directories` | none: the sources are one deck | Each directory of the sources is a deck, built as a site of its own. See [Decks and targets](#decks-and-targets) |
+| <a id="key-targets"></a>`targets` | mapping `{name: {theme: ...}}` | none: one build, with `theme` | Each deck is built once per target, with its theme (instead of `theme`, which is then refused). See [Decks and targets](#decks-and-targets) |
+| <a id="key-design"></a>`design` | mapping or path | none: the theme's `design.yaml` | Tokens, macros and layouts over those of the theme (a mapping, or the path of a YAML file). See [Design](#design-tokens-macros-and-layouts) |
+| <a id="key-katex"></a>`katex` | mapping `{render, macros}` | `render: build` when `quickjs` is installed, else in the browser | Formulas: `render: build` or `browser`; `macros`, a mapping `'\RR': '\mathbb{R}'` given to KaTeX at build and in the browser. See [Formulas](#formulas) |
+| <a id="key-cache_video_directory"></a>`cache_video_directory` | path | none: nothing is transcoded | The directory of the transcoded videos; setting it is what asks for them. See [Videos](#videos) |
+| <a id="key-chrome"></a>`chrome` | path | none: the Chromium of Playwright | The Chrome executable run by the PDF export, the layout report and `--render`; a macOS `.app` bundle is accepted |
+| <a id="key-base_url"></a>`base_url` | string | none: no `404.html` | The path of the site on its server, starting and ending with `/` (`/`, `/docs/`), or a full URL ending with `/`. Set, a theme that declares `not_found:` gets a `404.html` at the root of the site, with absolute links built from it (it is served at any depth); the other pages keep their relative links. See [the 404 page](../themes/docs/README.md#the-404-page) |
+| <a id="key-layout"></a>`layout` | mapping | `{}` | Options of the layout report (`--layout`): content root, viewport, thresholds, output directory, design rules. Unrelated to the `layout` of a page, which chooses its arrangement. See [Layout report](advanced.md#layout-report-llm-assisted-slide-layout) |
+
+### How the configuration is read
+
+Configuration precedence is **built-in defaults → the selected YAML file → explicit CLI options**. Only one YAML file is loaded: `configure_example.yaml` is a commented example, not a second layer of defaults.
+
+Relative paths are resolved from the YAML file's directory, independent of the shell's working directory. Absolute paths and `~` are supported. If omitted, `site_directory` defaults to `.site/`, `source_directory` to `src_site/` (see the note above), and `theme` to the generator's bundled `webpage-frame` theme. The default `plugin` list is empty: everything a bundled theme needs is a stage of the build - the page placed in the template of its theme, the heading ids, the menu, the index of a site that has none. A project lists only its own extensions, and the theme declares whether it has a menu (see [Theme: what it declares](advanced.md#theme-what-it-declares-about-the-build)). An explicitly configured relative theme path is relative to the YAML file.
+
+Configuration values are type-checked before generating or cleaning. Runtime fields such as `log`, `args`, and `plugin_paths` cannot be supplied in YAML. A plugin reads its options in `plugin_arg`.
+
+The output directory must not overlap the source or theme directory, even via symbolic links. It must not contain the configuration file, generator installation, or configured video cache. These checks apply to both generation and `--clean`. Cleaning does not require the source/theme to still exist and does not remove Python caches from the working directory.
+
+Page-level `config.yaml` files may be empty or contain only comments. Their metadata must otherwise be a mapping. Template discovery has no default depth limit, skips directory symlink cycles and never enters the site (reached through a link). The generator never writes through a link into the sources or the theme: a symbolic link to a directory is copied into the site as a directory (a linked library of videos is thus copied into each build), and a link to a file is kept only if it is relative and leads to a file of the copy, else the file is copied. A link to a directory containing it is kept only if it is relative and stays in the sources; the site itself is never copied.
+
+Check a project without running plugins, generating the site, or deleting outputs:
+
+```bash
+lhtml-site -i configure.yaml --check-config
+```
+
+This reports the resolved paths, selected plugin files and logging settings. Missing plugins fail validation before the previous site is touched. The check validates plugin file presence, not plugin execution or optional external dependencies. `--check-config` takes precedence if combined with `--clean`.
+
+### The site is published; the documents of a project are not
+
+The site holds the pages, the assets and the theme, without its Jinja templates
 (`template/` of the theme: the build reads them in the theme, the server
 would serve them as text). The build keeps the pages of the site in
 `.verification/structure.json` (`.verification/<deck>/<target>/` in a
@@ -121,52 +187,22 @@ writes a site without them. What is written for the author and
 their agent goes to `.structure/`, next to the configuration: `agents.md`
 (the procedure), `design.md` (the macros and tokens of the design),
 `credits.md` (the origin of the pages and the credits of the images) and
-`todo.md` (the planned figures and slides). A custom theme that needs another
-page setting in the site declares it with `public_page_keys:`.
+`todo.md` (the planned figures and slides).
 
-Configuration precedence is **built-in defaults → the selected YAML file → explicit CLI options**. Only one YAML file is loaded: `configure_example.yaml` is a commented example, not a second layer of defaults. The authoritative defaults are in `Config` in `lhtml_site/configuration.py`.
+A custom theme that needs another page setting in the site lists it in `public_page_keys`:
 
-Relative paths are resolved from the YAML file's directory, independent of the shell's working directory. Absolute paths and `~` are supported. If omitted, `site_directory` defaults to `.site/`, `source_directory` to `src_site/`, and `theme` to the generator's bundled `webpage-frame` theme. The default `plugin` list is empty: everything a bundled theme needs is a stage of the build - the page placed in the template of its theme, the heading ids, the menu, the index of a site that has none. A project lists only its own extensions, and the theme declares whether it has a menu (see [Theme](#theme-what-it-declares-about-the-build)). An explicitly configured relative theme path is relative to the YAML file.
-
-Configuration values are type-checked before generating or cleaning. An unknown key is ignored with a warning (and a spelling suggestion). Runtime fields such as `log`, `args`, and `plugin_paths` cannot be supplied in YAML. A plugin reads its options in `plugin_arg`.
-
-The output directory must not overlap the source or theme directory, even via symbolic links. It must not contain the configuration file, generator installation, or configured video cache. These checks apply to both generation and `--clean`. Cleaning does not require the source/theme to still exist and does not remove Python caches from the working directory.
-
-Check a project without running plugins, generating the site, or deleting outputs:
-
-```bash
-lhtml-site -i configure.yaml --check-config
+```yaml
+publish_structure: true
+public_page_keys: [duration, message]    # kept in structure/structure.json, for the theme
 ```
-
-This reports the resolved paths, selected plugin files and logging settings. Missing plugins fail validation before the previous site is touched. The check validates plugin file presence, not plugin execution or optional external dependencies. `--check-config` takes precedence if combined with `--clean`.
-
-Optional keys:
-
-| Key | Description |
-|-----|-------------|
-| `debug` | Verbose logging and retained intermediate files; overridden by `--debug` / `--no-debug` |
-| `cache_video_directory` | Directory of the transcoded videos. Setting it is what asks for them: the build makes the missing variants of the videos in the `assets/` of each page, copies the variants of these videos into the site (not the rest of the cache: a full build names the directories of the cache that belong to no video, and removes nothing), and LHTML adds a `<source>` per variant. Unset, nothing is transcoded |
-| `use_tidy` | Enable HTML tidy post-processing (default: false) |
-| `line-breaks` | The line breaks of the sources are rendered as `<br>` (LHTML's option; default: false) |
-| `keywords` | Extra Jinja2 template variables |
-| `plugin_arg` | Arguments passed to specific plugins |
-| `layout` | Options of the layout analysis (`--layout`): content root, viewport, thresholds, output directory, design rules (see [Layout Report](#layout-report-llm-assisted-slide-layout)). Unrelated to the `layout` of a page, which chooses its arrangement |
-| `chrome` | Chrome executable run by the PDF export, the layout report and `--render`, instead of the Chromium of Playwright; a macOS `.app` bundle is accepted |
-| `title_id` | Give the headings IDs, a stage of the build (`lhtml_site/headings.py`; default: true) |
-| `publish_sitemap` | Write `sitemap/` into the site: a redirection per page, named after its title id, marked `noindex` (default: false) |
-| `publish_structure` | Write the pages of the site into `structure/structure.{json,yaml}` of the site, for a custom theme or plugin that reads them there (default: false; the build keeps its record in `.verification/structure.json`) |
-| `deck` | Order of the pages: path of a deck file, or mapping/list of slides (see [Deck](#deck-order-of-the-slides)); without deck, the order of the files |
-| `design` | Tokens, macros and layouts overriding the theme's `design.yaml` (mapping, or path of a YAML file; see [Design](#design-tokens-macros-and-layouts)) |
-| `decks` | `directories`: each directory of the sources is a deck, built as a site of its own (see [Decks and targets](#decks-and-targets)) |
-| `targets` | `{name: {theme: ...}}`: each deck is built once per target, with its theme (instead of `theme`) |
-| `katex` | Formulas: `render: build` (default: rendered at build when `quickjs` is installed, the extra `lhtml-site[math]`, else in the browser) or `browser` (always in the browser); `macros`, a mapping `'\RR': '\mathbb{R}'` given to KaTeX at build and in the browser. See [Formulas](#formulas) |
-| `base_url` | Path of the site on its server, starting and ending with `/` (`/`, `/docs/`), or a full URL ending with `/`. Set, a theme that declares `not_found:` gets a `404.html` at the root of the site, with absolute links built from it (it is served at any depth); the other pages keep their relative links. Unset (default), no `404.html` |
 
 ### Decks and targets
 
 A course is several decks (a chapter each), and each is published twice: as
 slides, and as a PDF. The configuration says so, and one command builds
 everything:
+
+Guide: [A course of several chapters](https://scholartools.fr/lhtml/03_recipes/03_pdf/#a-course-of-several-chapters).
 
 ```yaml
 source_directory: src
@@ -192,13 +228,7 @@ _site/01_procedural/images/slide_000.jpg ...
   site directory itself.
 - The site of a deck for a target is `<site>/<deck>/<target>/`. A target
   whose theme declares `export: pdf` is rendered to `<site>/<deck>/<deck>.pdf`
-  and `images/`, and its site is not published. The export runs Chromium
-  through Playwright (`pipx inject lhtml-site pypdf`, then
-  `pipx inject --include-apps lhtml-site playwright` and
-  `playwright install --only-shell chromium`; with pip,
-  `pip install "lhtml-site[pdf]"` then
-  `python -m playwright install --only-shell chromium`). `lhtml-site doctor`
-  says what is missing.
+  and `images/`, and its site is not published (see [PDF export](#pdf-export)).
 - `--target html` builds only that target (repeatable, or `--target
   html,pdf`); `--only 01_procedural` builds only that deck, and
   `--only 01_procedural/03_noise` pages of it.
@@ -212,159 +242,7 @@ _site/01_procedural/images/slide_000.jpg ...
   target}`); `--lint` checks each deck once; `--render` renders once.
 - The pages at the top of the sources belong to no deck: the build says so.
   A project with `decks: directories` and no deck directory is an error.
-
-## Pipeline
-
-The generator runs the following stages:
-
-1. **Data preparation** — Find the `.html.j2` and `.md.j2` templates, select and order them (deck), copy the sources and theme to the site (or, with `--only`, the templates and assets of its pages; the theme without its templates and declarations, read in the theme), extract the titles and the structure of the site (`sitemap/` and `structure/` in the site with `publish_sitemap` / `publish_structure`), write the design (`design.css` in the site, `design.md` in `.structure/`)
-2. **Pre-process plugins** — Plugin hooks before Jinja2 rendering
-3. **Jinja2 rendering** — Render the templates with their variables (see [Template variables](#template-variables))
-4. **Mid-process plugins** — Plugin hooks between Jinja2 and LHTML
-5. **LHTML conversion** — Convert LHTML markup to HTML, with optional tidy (a Markdown page is converted in step 3), then **Formulas** — render the formulas of the pages that have some with the KaTeX of the theme, when they are rendered at build (see [Formulas](#formulas))
-6. **SASS compilation** — Compile `.sass` files to `.css` (if libsass installed)
-7. **Post-process plugins** — Plugin hooks after all conversions
-
-## Markdown pages
-
-A page is written in LHTML (`index.html.j2`) or in Markdown (`index.md.j2`):
-the file says which, the generator never guesses it. Both give `index.html`,
-and both can sit in the same project, the same deck, the same directory -
-not as the same page: `index.html.j2` next to `index.md.j2` is refused.
-
-~~~markdown
----
-layout: stack
----
-# Noise *functions* {: #noise}
-
-Perlin noise \(n(x)\) is smooth: {{ params.detail | default('see below') }}.
-
-```python
-def noise(x): ...
-```
-~~~
-
-- Jinja runs first, as for an LHTML page: the variables, the includes and
-  the macros of Jinja work the same way. The theme wraps the page, its
-  content converted alone (the Jinja filter `markdown_page`): a Markdown
-  page writes no `{% extends %}`, `{% block content %}` or `<html>`, which
-  is refused with a message.
-- CommonMark, with tables and strikethrough; raw HTML is kept. A fenced code
-  block is highlighted as LHTML highlights `code::[python]`.
-- The mathematics `\(...\)` and `\[...\]` is kept as written for KaTeX
-  (Markdown alone would read `\(` as `(` and `_` as emphasis); see
-  [Formulas](#formulas).
-- A heading gets an id as in LHTML (`{: #id}` sets it by hand: `{#id}`
-  would be a Jinja comment); the title of the page is its first heading,
-  without its marks. Only the `#` headings: an underlined one
-  (`Title` / `=====`) gets no id and does not title the page.
-- What is LHTML's is not available: the macros of the design (`gap::`),
-  `video::` and its transcoded variants (write `<video>` in HTML), the line
-  breaks option, the lint of the values written by hand, and the source map
-  (a block of a Markdown page names no line in the layout report nor in the
-  comments on the render; a problem is still placed at its line).
-
-## Template variables
-
-Each page is rendered by Jinja2 with:
-
-| Variable | Value |
-|----------|-------|
-| `pathToRoot` | Relative path to the root of the site (`../../`) |
-| `pageID` | Number of the page in the site (order of the files or of the deck), from 0 |
-| `pathTo_<id>` | Relative link to the page `<id>` of the sitemap (`<id>`: its title in lower case with `_` for spaces, or the value of `{% set title_id = '...' %}`; `_1`, `_2`... for repeated titles) |
-| `linkTo_<id>` | `<a href="...">` to that page |
-| `params` | Parameters of the occurrence given by the deck (`params.current`), empty otherwise |
-| `page` | Metadata of the page: its `config.yaml` and deck entry (`page.notes`, `page.layout`), title, place in the site |
-| `layout` | Layout of the page, when the page sets it with `{% set layout = 'side' %}` (the front matter sets `page.layout` instead, see [Design](#design-tokens-macros-and-layouts)) |
-| `credit(file)`, `credits` | Credit of a file of the page, credits of all the pages (see [Credits](#credits-origin-of-the-slides-figures-in-code)) |
-| `page.math` | The page has formulas: detected in its source, or its setting `math: true` / `math: false` (see [Formulas](#formulas)) |
-| `page.math_render` | Where its formulas are rendered: `build` (the page needs `katex.min.css` only) or `browser` (it loads the KaTeX scripts too) |
-| `page.katex_options` | The options of KaTeX (delimiters, macros), as JSON for auto-render in the browser |
-| keys of `keywords` | Values of the configuration (`params`, `page`, `credit`, `credits` are reserved) |
-
-`{% extends %}`, `{% include %}` and `{% import %}` read the templates of the
-project (relative to its source directory), then of the other projects of the
-deck, then of the theme (`theme/template/base.html` is `template/base.html`
-of the theme), then of the site.
-
-## Themes
-
-Four built-in themes are available, named alone in the configuration
-(`theme: slides`; see [Getting started](../../../README.md#getting-started-your-first-slides) for which to choose):
-
-- **`webpage-frame/`** — Standard website with navigation menu, suitable for documentation and course pages
-- **`docs/`** — Documentation site: search (Pagefind), menu by section and group, "On this page", breadcrumb, previous / next, light and dark, a `404.html` with `base_url`; its settings are the `docs` key of `keywords:` (see `themes/docs/README.md`)
-- **`slides/`** — Presentation slides for browser display
-- **`slides-pdf/`** — Presentation slides optimized for PDF export
-
-Themes use Jinja2 template inheritance. The base template provides blocks
-that content pages can override; which template and which block is what the
-theme declares in its `theme.yaml`, with what the layout analysis must take
-as the content of a page - see
-[Theme: what it declares about the build](#theme-what-it-declares-about-the-build).
-
-## Formulas
-
-The themes render the formulas with KaTeX, on the pages that have some: the
-build finds `\(...\)`, `\[...\]` and `$$...$$` in the source of a page,
-outside code, comments and Jinja (a single `$...$` is not a delimiter, so a
-price stays text). Formulas a page gets from an included template or a macro
-are not seen: the page setting `math: true` (or `math: false`) decides
-instead. A page with no formula references no KaTeX file.
-
-- **At build** (`katex: render: build`, the default, with `quickjs`
-  installed: the extra `lhtml-site[math]`): the stage Formulas runs the
-  `libs/katex/katex.min.js` of the theme in QuickJS, so that the HTML always
-  matches the CSS of the theme. The page gets the KaTeX HTML and MathML of
-  each formula and `katex.min.css`, without any KaTeX script. A formula
-  KaTeX cannot read is shown in red (`katex-error`) and is a warning at its
-  line in the source (an error with `--strict`). The formulas rendered are
-  kept in `.verification/katex.json`, by TeX, display mode, options and the
-  hash of `katex.min.js`.
-- **In the browser** (`render: browser`, or `quickjs` missing, which the
-  build says in one line): the page loads `katex.min.js` and auto-render,
-  which also render the `\begin{equation}`-style environments.
-- `katex: macros:` (`{'\RR': '\mathbb{R}'}`) is given to KaTeX in both
-  cases.
-
-`quickjs` has wheels up to Python 3.12; on a newer Python, pip compiles it,
-which needs a C compiler. `lhtml-site doctor` says whether it is found.
-
-## PDF export
-
-The theme `slides-pdf` (a theme that declares `export: pdf`) writes
-`<deck>.pdf` (`slides.pdf` for a project of one deck) and `images/` (an
-image of each slide, 3840 px wide) next to the site directory of its
-target; the HTML of the slides is only a step towards them, and is not
-kept. To install it, see
-[PDF export](https://github.com/drohmer/lhtml-site#pdf-export) in the README;
-`lhtml-site doctor` says what is found.
-
-It runs Chromium through Playwright for Python (the extra
-`lhtml-site[pdf]`: playwright, pypdf, and the Chromium of Playwright), as the
-layout report and `--render` do: no Node.js. The export opens one browser
-for the deck, prints a few slides at a time, and prints a slide once it is
-ready (fonts loaded, math rendered, images decoded, a frame of each video,
-the promises a page or a demo, in an iframe too, registered with
-`window.__lhtmlReady`) rather than after a fixed delay; a slide that is not
-ready within a minute fails the build. A bar shows the progress on a
-terminal. The configuration key `chrome` names another Chromium or Chrome
-to run instead.
-
-## Writing slides with an AI agent
-
-[`src/lhtml_site/docs/agents.md`](agents.md) is the procedure for an agent (LLM) that
-writes or edits slides: plan in the deck, layouts and macros, `--only
---layout`, `--lint`, how to read the report and when to stop. It does not
-depend on the agent used. Each build copies it into `.structure/agents.md` of
-the site, and the layout report links to it. In a slide project, one line in
-the file that your agent reads (`AGENTS.md`, `CLAUDE.md`, ...) is enough:
-
-```
-To write or edit the slides, follow .structure/agents.md of this project.
-```
+- A target may not be named `images` (the PDF export writes the images of the slides there).
 
 ## Deck: order of the slides
 
@@ -422,7 +300,8 @@ slides:
   setting of the page given to the plugins (`meta['structure']`), like the
   page `config.yaml`, with the template of each page in the site, `template`,
   and its origin: `src`, its source file, `source`, `occurrence`; only the
-  keys a theme displays are written down (see "The site is published" above). The metadata of a
+  keys a theme displays are written down (see
+  [The site is published](#the-site-is-published-the-documents-of-a-project-are-not)). The metadata of a
   directory or a glob applies to each of its pages, except `duration`, which
   is the duration of all its pages together.
 - Pages that are not in the deck are not generated (they are listed in the
@@ -483,48 +362,156 @@ so adding pages of other projects or repeated slides does not change them.
 `--check-config` also reads the deck and the design (sources, macros). Several decks can share
 the same sources (`lhtml-site --deck deck_short.yaml`).
 
-## Theme: what it declares about the build
+## Markdown pages
 
-A theme answers questions the build used to answer for it: which template a
-page is wrapped in, which block it fills, and what the measurement must take
-as the content of a page. It says so in `theme.yaml`, next to its
-`design.yaml`:
+A page is written in LHTML (`index.html.j2`) or in Markdown (`index.md.j2`):
+the file says which, the generator never guesses it. Both give `index.html`,
+and both can sit in the same project, the same deck, the same directory -
+not as the same page: `index.html.j2` next to `index.md.j2` is refused.
+
+~~~markdown
+---
+layout: stack
+---
+# Noise *functions* {: #noise}
+
+Perlin noise \(n(x)\) is smooth: {{ params.detail | default('see below') }}.
+
+```python
+def noise(x): ...
+```
+~~~
+
+- Jinja runs first, as for an LHTML page: the variables, the includes and
+  the macros of Jinja work the same way. The theme wraps the page, its
+  content converted alone (the Jinja filter `markdown_page`): a Markdown
+  page writes no `{% extends %}`, `{% block content %}` or `<html>`, which
+  is refused with a message.
+- CommonMark, with tables and strikethrough; raw HTML is kept. A fenced code
+  block is highlighted as LHTML highlights `code::[python]`.
+- The mathematics `\(...\)` and `\[...\]` is kept as written for KaTeX
+  (Markdown alone would read `\(` as `(` and `_` as emphasis); see
+  [Formulas](#formulas).
+- A heading gets an id as in LHTML (`{: #id}` sets it by hand: `{#id}`
+  would be a Jinja comment; see [Heading ids](#heading-ids)); the title of the page is its first heading,
+  without its marks. Only the `#` headings: an underlined one
+  (`Title` / `=====`) gets no id and does not title the page.
+- What is LHTML's is not available: the macros of the design (`gap::`),
+  `video::` and its transcoded variants (write `<video>` in HTML), the line
+  breaks option, the lint of the values written by hand, and the source map
+  (a block of a Markdown page names no line in the layout report nor in the
+  comments on the render; a problem is still placed at its line).
+
+## Template variables
+
+Each page is rendered by Jinja2 with:
+
+| Variable | Value |
+|----------|-------|
+| `pathToRoot` | Relative path to the root of the site (`../../`) |
+| `pageID` | Number of the page in the site (order of the files or of the deck), from 0 |
+| `pathTo_<id>` | Relative link to the page `<id>` of the sitemap (`<id>`: its title in lower case with `_` for spaces, or the value of `{% set title_id = '...' %}`; `_1`, `_2`... for repeated titles) |
+| `linkTo_<id>` | `<a href="...">` to that page |
+| `params` | Parameters of the occurrence given by the deck (`params.current`), empty otherwise |
+| `page` | Metadata of the page: its `config.yaml` and deck entry (`page.notes`, `page.layout`), title, place in the site |
+| `layout` | Layout of the page, when the page sets it with `{% set layout = 'side' %}` (the front matter sets `page.layout` instead, see [Design](#design-tokens-macros-and-layouts)) |
+| `credit(file)`, `credits` | Credit of a file of the page, credits of all the pages (see [Credits](#credits-origin-of-the-slides-figures-in-code)) |
+| `site_pages` | The pages of the menu, in order (`path`, `title` and the page settings the theme lists in `toc: keys:`); `site_pages[pageID]` is this page. Empty for a theme with no menu |
+| `page.math` | The page has formulas: detected in its source, or its setting `math: true` / `math: false` (see [Formulas](#formulas)) |
+| `page.math_render` | Where its formulas are rendered: `build` (the page needs `katex.min.css` only) or `browser` (it loads the KaTeX scripts too) |
+| `page.katex_options` | The options of KaTeX (delimiters, macros), as JSON for auto-render in the browser |
+| keys of `keywords` | Values of the configuration (`params`, `page`, `credit`, `credits` are reserved) |
+
+`{% extends %}`, `{% include %}` and `{% import %}` read the templates of the
+project (relative to its source directory), then of the other projects of the
+deck, then of the theme (`theme/template/base.html` is `template/base.html`
+of the theme), then of the site.
+
+### Stylesheets and scripts of the pages
+
+The themes `webpage-frame`, `slides` and `slides-pdf` add to each page the stylesheets and
+scripts listed in four `keywords`, after their own:
+
+| Keyword | Each entry is | Written as |
+|---------|---------------|------------|
+| `cssAbs` | a stylesheet, as a path from the root of the site | `<link rel="stylesheet" href="{{ pathToRoot }}<entry>">` |
+| `jsAbs` | a script, as a path from the root of the site | `<script src="{{ pathToRoot }}<entry>" defer>` |
+| `css` | a stylesheet, as written (a URL, or a path relative to each page) | `<link rel="stylesheet" href="<entry>">` |
+| `js` | a script, as written | `<script src="<entry>" defer>` |
 
 ```yaml
-template: 'theme/template/base.html'   # the page is wrapped in it
-content_block: 'content'               # the Jinja block it fills
-layout:                                # what the layout analysis reads
-  root: 'body'                         # CSS selector of the content
-  exclude: 'nav, footer'               # children of the root that are not content
-  width: 1920                          # size of a page, in CSS pixels
-  height: 1080
-not_found: 'theme/template/404.html'   # the content of 404.html (with base_url)
+keywords:
+  cssAbs: [assets/course.css]     # src/assets/course.css, copied to the site as assets/course.css
 ```
 
-`not_found:` names the template of the content of `404.html`, as `theme/`
-followed by its path in the theme:
-the build writes that page at the root of the site when the configuration
-sets `base_url` (see [Configuration](#configuration)), out of the menu, of
-previous / next and of the search index; a page `src/404.md.j2` (or
-`.html.j2`) of the project replaces the content of the theme. The `docs`
-theme declares one.
+Despite its name, a `cssAbs` entry is not an absolute URL: it is prefixed with the path to the
+root of the site, so that the same file is found from a page at any depth. The `docs` theme reads
+its own lists instead, `docs: css:` and `docs: js:` (also from the root of the site; see
+[the docs theme](../themes/docs/README.md#settings)).
 
-Everything is optional and a theme with no `theme.yaml` builds as before.
-The order is **engine, then theme, then project**: the defaults above are
-the engine's fallback, a theme replaces what it declares, and the `layout:`
-key of a project replaces both - the project keeps the last word because it
-is the one that knows it added a banner to its pages.
+## Heading ids
 
-A theme may declare only `root`, `exclude`, `width`, `height` and
-`reserved` under `layout:`; the other options (thresholds, output
-directory, jobs) belong to a project. An unknown key is refused by name,
-and `--check-config` prints the manifest the build will use.
+The build gives an id to each heading that has none (a stage of the build,
+`lhtml_site/headings.py`; `title_id: false` turns it off). An id written by hand
+(`==(#mine) Title` in LHTML, `## Title {: #mine}` in Markdown) is kept as written: it is the way
+to keep an anchor that a link already uses. The theme chooses the scheme, in its `theme.yaml`
+(`heading_ids: scheme:`; see [Theme: what it declares](advanced.md#theme-what-it-declares-about-the-build)):
 
-The four themes shipped declare theirs. `webpage-frame` holds its content
-in `#main-content-centered`: a project using it used to have to write that
-selector in its own configuration, and a project that did not had its whole
-page measured as a single block - the example site went from 3 blocks over
-3 pages to 145 when its theme started saying so.
+| Scheme | Themes | `= When something goes wrong` | Unique in |
+|--------|--------|-------------------------------|-----------|
+| `legacy` (the default) | `webpage-frame`, `slides`, `slides-pdf`, a theme that does not say | `when_something_goes__l1` | the site |
+| `slug` | `docs` (`heading_ids: scheme: slug`) | `when-something-goes-wrong` | the page |
+
+**The `legacy` scheme** keeps the ids of the sites already published. The id is the text in
+lower case, each of ` -,.:()` becomes `_`, then `__` becomes `_`, characters unsafe in a URL
+(`<>"&{}%`, a backquote, a tab) are removed, the result is cut at 20 characters, and the level of
+the heading follows (`= Simulation - Mass-springs Cloth` gives `simulation__mass_spr_l1`). This is
+the scheme of the generator copied into projects since April 2026, so links into the sites it
+built keep working; a repeated id gets `_id2`, `_id3`... The ids of the headings written as text
+are unique in the site.
+
+**The `slug` scheme** gives readable ids: the text in lower case, the accents of Latin letters
+removed (`œ` gives `oe`), apostrophes dropped, the words of letters and digits joined by `-`,
+nothing else kept, never truncated (`Vue d'ensemble` gives `vue-densemble`,
+`std::vector, exemples` gives `std-vector-exemples`). A repeated heading gets `-2`, `-3`... in
+its page. A generated id never takes an id written by the author in the page, nor one of the ids
+the theme reserves for its own elements (`heading_ids: reserved:`, for the `docs` theme
+`content`, `toc`, `sidebar`...). See also [the docs theme](../themes/docs/README.md#heading-ids).
+
+**Headings from Jinja.** A heading whose text comes from Jinja
+(`= {{ parts[params.current - 1] }}`, a heading in a `{% for %}` loop) gets its id from its text
+as rendered, with the scheme of the theme, unique in its page: each occurrence of a page reused
+with `params` gets the id of its own title (`= Interpolation de keyframes` gives
+`interpolation_de_key_l1` in the `legacy` scheme). The ids of the headings written as text do not
+depend on these.
+
+**Where they are read.** The theme webpage-frame lists the level-2 headings with an id of the page
+in its "Page content" column, read in the page itself (`theme/js/title_id.js`): the column is the
+same over http and from a file opened on disk; the `docs` theme lists the h2 in "On this page".
+Nothing about the headings is written into the site; the build keeps their record, for `--only`
+(the ids of the pages it does not generate), in `.verification/headings.json` next to the
+dependency store (`.verification/<deck>/<target>/` in a project of several). Version 1.0 wrote
+`<page>.title_id.json`, a copy `title_id.json` and `structure/title_id.json` into the site: a
+custom theme that read them reads the headings of the page instead
+(`document.querySelectorAll('h2[id]')`).
+
+## Themes
+
+Four built-in themes are available, named alone in the configuration
+(`theme: slides`; see [Getting started](../../../README.md#getting-started-your-first-slides) for which to choose):
+
+- **`webpage-frame/`** — Standard website with navigation menu, suitable for documentation and course pages
+- **`docs/`** — Documentation site: search (Pagefind), menu by section and group, "On this page", breadcrumb, previous / next, light and dark, a `404.html` with `base_url`; its settings are the `docs` key of `keywords:` (see [the docs theme](../themes/docs/README.md))
+- **`slides/`** — Presentation slides for browser display
+- **`slides-pdf/`** — Presentation slides optimized for PDF export
+
+Guide: [Themes](https://scholartools.fr/lhtml/04_themes/).
+
+Themes use Jinja2 template inheritance. The base template provides blocks
+that content pages can override; which template and which block is what the
+theme declares in its `theme.yaml`, with what the layout analysis must take
+as the content of a page - see
+[Theme: what it declares about the build](advanced.md#theme-what-it-declares-about-the-build).
 
 ## Design: tokens, macros and layouts
 
@@ -532,6 +519,8 @@ A theme can describe its design in `design.yaml`: **tokens** (sizes, colors,
 spacing), **macros** (LHTML tags such as `gap::`, `aside::`, `box::`) and
 **layouts** of the pages. The `slides` and `slides-pdf` themes provide one,
 built from the most frequent idioms of 904 existing slides.
+
+Guide: [Themes](https://scholartools.fr/lhtml/04_themes/#change-the-look).
 
 ```
 = Inverse kinematics
@@ -683,10 +672,92 @@ design:
     demo: null                       # remove a macro of the theme
 ```
 
-Macro fields (see the LHTML README): `tag` (default `div`), `class`, `style`,
-`attrs`, `empty`, `url`, `variant`, `default`, plus `css` and `doc` used by
-the generator. The `design` key may also be the path of a YAML file with
-the same structure.
+Macro fields (see [Macros](https://github.com/drohmer/lhtml/blob/main/README.md#macros) in
+LHTML): `tag` (default `div`), `class`, `style`, `attrs`, `empty`, `url`, `variant`, `default`,
+plus `css` and `doc` used by the generator. The `design` key may also be the path of a YAML file
+with the same structure.
+
+## Formulas
+
+The themes render the formulas with KaTeX, on the pages that have some: the
+build finds `\(...\)`, `\[...\]` and `$$...$$` in the source of a page,
+outside code, comments and Jinja (a single `$...$` is not a delimiter, so a
+price stays text). Formulas a page gets from an included template or a macro
+are not seen: the page setting `math: true` (or `math: false`) decides
+instead. A page with no formula references no KaTeX file. To install the
+rendering at build, see [Formulas](../../../README.md#formulas) in the installation.
+
+- **At build** (`katex: render: build`, the default, with `quickjs`
+  installed: the extra `lhtml-site[math]`): the stage Formulas runs the
+  `libs/katex/katex.min.js` of the theme in QuickJS, so that the HTML always
+  matches the CSS of the theme. The page gets the KaTeX HTML and MathML of
+  each formula and `katex.min.css`, without any KaTeX script: no TeX source
+  shown while the page loads, and nothing for the PDF export or the layout
+  report to wait for. A formula
+  KaTeX cannot read is shown in red (`katex-error`) and is a warning at its
+  line in the source (an error with `--strict`). The formulas rendered are
+  kept in `.verification/katex.json`, by TeX, display mode, options and the
+  hash of `katex.min.js`: the next build only renders the new ones.
+- **In the browser** (`render: browser`, or `quickjs` missing, which the
+  build says in one line): the page loads `katex.min.js` and auto-render,
+  which also render the `\begin{equation}`-style environments.
+- `katex: macros:` (`{'\RR': '\mathbb{R}'}`) is given to KaTeX in both
+  cases.
+
+```yaml
+katex:
+  render: build                        # or browser: always in the browser
+  macros: {'\RR': '\mathbb{R}'}       # for KaTeX, at build and in the browser
+```
+
+`lhtml-site doctor` says whether `quickjs` is found.
+
+## PDF export
+
+The theme `slides-pdf` (a theme that declares `export: pdf`) writes
+`<deck>.pdf` (`slides.pdf` for a project of one deck) and `images/` (an
+image of each slide, 3840 px wide) next to the site directory of its
+target; the HTML of the slides is only a step towards them, and is not
+kept. To have both the slides in the browser and the PDF at each build, declare two
+[targets](#decks-and-targets).
+
+Guide: [Your slides as a PDF](https://scholartools.fr/lhtml/03_recipes/03_pdf/).
+
+It runs Chromium through Playwright for Python (the extra
+`lhtml-site[pdf]`: playwright, pypdf, and the Chromium of Playwright), as the
+layout report and `--render` do: no Node.js. To install it, see
+[PDF export](../../../README.md#pdf-export) in the installation (after pipx:
+`pipx inject lhtml-site pypdf`, `pipx inject --include-apps lhtml-site playwright`,
+`playwright install --only-shell chromium`); `lhtml-site doctor` says what is found.
+
+The export opens one browser
+for the deck, prints a few slides at a time, and prints a slide once it is
+ready (fonts loaded, math rendered, images decoded, a frame of each video,
+the promises a page or a demo, in an iframe too, registered with
+`window.__lhtmlReady`) rather than after a fixed delay; a slide that is not
+ready within a minute fails the build. A bar shows the progress on a
+terminal. The configuration key `chrome` names another Chromium or Chrome
+to run instead.
+
+## Videos
+
+Guide: [A talk with videos](https://scholartools.fr/lhtml/03_recipes/02_talk-with-videos/).
+
+A video of a page (`video::`, `videoplay::` of the slides) is shown as written. Setting
+`cache_video_directory:` asks for transcoded variants, which every browser reads:
+
+```yaml
+cache_video_directory: cache_video
+```
+
+The build then makes, with `ffmpeg` and `ffpb` (`lhtml-site doctor`), an H.264 MP4 and a VP9 WebM
+of each video (`.mp4`, `.webm`, `.mkv`) of the `assets/` directory of a page, keeps them in the
+cache directory, and copies the variants of these videos into the site
+(`assets/cache_video_codecs/` of the page); LHTML then writes a `<source>` per variant. Only the
+missing variants are made; the rest of the cache is not copied, and a full build names the
+directories of the cache that belong to no video, and removes nothing. With
+`decks: directories`, each deck has its own cache, `cache_video/<deck>/`. Unset, nothing is
+transcoded.
 
 ## Credits, origin of the slides, figures in code
 
@@ -744,344 +815,20 @@ their script: a figure is made again when its script changes (delete
 `.figures/` after a change of the data it reads). A figure that fails gives a
 warning with the error.
 
-## Plugins
+## Writing slides with an AI agent
 
-A plugin (an extension of the project, `plugin:` of the configuration) is a
-Python file that transforms the pages: it receives content and returns
-content, and the build reads and writes the files - in the site, never in
-the sources (`lhtml_site/extensions.py`).
+[`src/lhtml_site/docs/agents.md`](agents.md) is the procedure for an agent (LLM) that
+writes or edits slides: plan in the deck, layouts and macros, `--only
+--layout`, `--lint`, how to read the report and when to stop. It does not
+depend on the agent used. Each build copies it into `.structure/agents.md` of
+the site, and the layout report links to it. In a slide project, one line in
+the file that your agent reads (`AGENTS.md`, `CLAUDE.md`, ...) is enough:
 
-```python
-def prepare(context):                  # once per build, before the pages
-    ...
-
-def pre_process(text, context):        # the template of a page, before Jinja
-    return text
-
-def mid_process(html, context):        # the page as Jinja wrote it, before LHTML
-    return html
-
-def post_process(html, context):       # the page once converted, before the menu
-    return html
+```
+To write or edit the slides, follow .structure/agents.md of this project.
 ```
 
-`context.options` is `plugin_arg` of the configuration, `context.config_directory`
-the directory its paths are relative to, `context.page` the page (`title`,
-`dir`, `filename`, `src` and its settings; `None` in `prepare`), and
-`context.warning(message)` reports a warning at the page. An exception fails
-the page, named with the plugin; the other pages are built and the build
-fails at the end. A module is loaded once per build, so it keeps a state
-from `prepare` to the pages, but not from a build to the next (`--watch`).
-
-This is a discipline, not a sandbox: a plugin is Python and can still reach
-the file system. It no longer has to, and the plugins of the generator do
-not. The hooks of static_website_lhtml, `pre_process(meta)` and the like, are refused
-with the form to write.
-
-A heading without an id written by hand (`==(#mine) Title`, `## Title {: #mine}`) gets one from its text, followed by its level: lower case, each of ` -,.:()` becomes `_`, then `__` becomes `_`, characters unsafe in a URL (`<>"&{}%`, a backquote, a tab) are removed, and the result is cut at 20 characters (`= Simulation - Mass-springs Cloth` gives `simulation__mass_spr_l1`). This is the scheme of the generator copied into projects since April 2026, so links into the sites it built keep working; a repeated id gets `_id2`, `_id3`... An id written by hand is kept as written: it is the way to keep an anchor that a link already uses.
-
-A heading whose text comes from Jinja (`= {{ parts[params.current - 1] }}`, a heading in a `{% for %}` loop) gets its id from its text as rendered, with the same scheme, unique in its page: each occurrence of a page reused with `params` gets the id of its own title (`= Interpolation de keyframes` gives `interpolation_de_key_l1`). The ids of the headings written as text are unique in the site and do not depend on these.
-
-The theme webpage-frame lists the level-2 headings with an id of the page in its "Page content" column, read in the page itself (`theme/js/title_id.js`): the column is the same over http and from a file opened on disk. Nothing about the headings is written into the site; the build keeps their record, for `--only` (the ids of the pages it does not generate), in `.verification/headings.json` next to the dependency store (`.verification/<deck>/<target>/` in a project of several). Version 1.0 wrote `<page>.title_id.json`, a copy `title_id.json` and `structure/title_id.json` into the site: a custom theme that read them reads the headings of the page instead (`document.querySelectorAll('h2[id]')`).
-
-Page-level `config.yaml` files may be empty or contain only comments. Their metadata must otherwise be a mapping. Template discovery has no default depth limit, skips directory symlink cycles and never enters the site (reached through a link). The generator never writes through a link into the sources or the theme: a symbolic link to a directory is copied into the site as a directory (a linked library of videos is thus copied into each build), and a link to a file is kept only if it is relative and leads to a file of the copy, else the file is copied. A link to a directory containing it is kept only if it is relative and stays in the sources; the site itself is never copied.
-
-A plugin is called for the pages generated by this build (all of them, or those of `--only`); a page that failed before a stage is not given to it. The keys written by the generator (`dir`, `filename`, `template`, `level`, `src`, `source`, `occurrence`, `path`, `title_id`) cannot be set in a `config.yaml` nor in the deck.
-
-### Built-in Plugins
-
-| Plugin | Hook | Description |
-|--------|------|-------------|
-| `pre_include.py` | pre | Writes the files of `plugin_arg: pre_include:` at the top of each page (shared Jinja macros) |
-| `code_include.py` | mid | `includeadv::{...}`: code of a Git repository (`plugin_arg: includeadv:`), a whole file or the lines found in it |
-
-The page placed in the template of its theme, the heading ids, the menu,
-the index of a site that has none and the transcoded videos used to be
-plugins; they are stages of the build (`lhtml_site/wrap.py`, `lhtml_site/headings.py`,
-`lhtml_site/menu.py`, `lhtml_site/index_page.py`, `lhtml_site/video_cache.py`). A configuration
-that still lists one of them is refused by name.
-
-## Layout Report (LLM-assisted slide layout)
-
-`--layout` measures the layout of every generated page in headless Chromium
-and writes a text report that an LLM (or any script) can read to find and fix
-layout problems. It runs the Chromium of Playwright for Python, as the PDF
-export does (the extra `lhtml-site[pdf]`, then
-`python -m playwright install --only-shell chromium`; README, "PDF export").
-
-**What happens when it cannot run.** The analysis never takes the build with
-it: a missing browser, a page it cannot measure, a measurement that crashes
-are reported (`Layout report not produced ...`), the site is built and
-published, and the report of the previous build is left whole - what the
-measurement cannot replace, it does not destroy. What it is *asked* to do is
-another matter: an output directory that would overlap the sources, the
-theme or the site, and an option of the wrong shape (`jobs`,
-`design_rules`), stop the build with the name of the key, before anything is
-written.
-
-```bash
-lhtml-site --layout          # full generation + layout report
-lhtml-site --only 03_squelette/04_ik --layout   # after editing a slide
-```
-
-The measure shows its progress (pages measured, time left). With `--only`,
-only those pages are measured, and the summary keeps the other pages of the
-previous report. Without it, a page is measured again only when something
-it shows changed: its report is kept when its HTML and every file it loaded
-(styles, images, fonts, videos) are those it was measured with, with the
-same options of the measure, the same Chrome and the same measuring script;
-its analysis is made again. On a deck of 78 slides: 6 s when nothing
-changed, 9 s after editing one slide, 26 s for all of it. Delete `.layout/`
-to measure everything again. Output in `.layout/` (next to the configuration file). Each page has a unique `pages/<relative HTML path>/` directory, for example `pages/chapter/a.html/layout.json`. The output path remains configurable and is checked before deletion: it cannot overlap sources, theme, site or cache, or contain the configuration, generator or plugin files. Paths through symbolic links are checked too.
-
-Files:
-
-- `summary.md`: the usual values of the deck (its style, see below), then all
-  pages sorted by number of problems and warnings, with their number `n` in
-  the deck and links to the page reports
-- `contact_NN.png` (and `.html`): thumbnails of all pages in deck order, 16
-  per sheet, with badges `P` (problems), `W` (warnings), `D` (differences
-  with the deck): the whole deck at a glance
-- `deck.json`: the usual values of the deck, for scripts
-- `changes.md`: what changed since the previous report (see below)
-- `summary.md` links to `structure/design.md` of the site: the macros and
-  tokens of the design (when the theme or the configuration defines one), to
-  use instead of inline styles
-- `pages/<relative HTML path>/layout.md`: one row per top-level block (number, kind, position and
-  size of what is actually drawn, margins, CSS position, font size, signature),
-  then the problems, warnings, differences with the deck, density and the
-  vertical gaps between blocks. Each finding ends with where its blocks are
-  written: `[line 62]` for the line of the block in the page,
-  `[parts/bloc.j2:3]` for a block written in a template the page includes,
-  `[near line 62]` for the line of what surrounds it (an element inside a
-  marked block), `[no source marker]` for a block nothing names (one a
-  script writes); the table writes them `62`, `~62` and `-`
-- `pages/<relative HTML path>/layout.json`: the same data, for scripts.
-  `analysis.findings` is what was found, one shape for every check:
-  `{key, code, severity, blocks, subject, detail, text, data}` - `code` is
-  what the report prints (`HIDDEN TEXT`), `severity` is `problem`,
-  `warning`, `deviation` or `note`, `blocks` the numbers the finding is
-  about, `text` the line of the report, `data` the row the check produced
-  (its measured values). Read it instead of parsing `layout.md`
-- `pages/<relative HTML path>/render.png`: the real render
-- with `images: true` only (they take a third of the time of the measure):
-  `pages/<relative HTML path>/overlay.png`, the real render with the outlined
-  ink of each block and its number; `blocks.png`, the ink of each block as
-  solid rectangles, content hidden; `internal-overlay.png`, the render with
-  the inner blocks outlined (columns, paragraphs, list items, figures,
-  captions, formulas). `layout.md` gives the same blocks, as text
-
-Coordinates are CSS pixels, origin at the top-left corner of the page
-(1920×1080 for slides); the usable area is the inside of the slide frame.
-Detected problems:
-
-- `HIDDEN TEXT`: text covered by another block drawn on top of it (checked in
-  the browser, along each line of text: an opaque image pixel or a background
-  of another block is visible on top of the text)
-- `COLLISION`: the drawn content of two blocks overlaps (text on text, text
-  on the drawn part of an image, images, backgrounds)
-- `OUT OF AREA`: block beyond the usable area. A block laid over the page
-  rather than placed in the content is compared with the whole page
-  instead - one marked as an intentional overlay (class `overlay`), or one
-  fixed to the viewport (`position: fixed`: a timer, a page number, a
-  source line in the margin). A full-bleed figure covers the slide on
-  purpose and a fixed note sits in the margin on purpose; either one is
-  still reported when it spills past the page itself
-- `CLIPPED`: content cut by `overflow`
-- `UPSCALED IMAGE`: bitmap or video drawn more than 1.25× its native size,
-  hence blurry (vector images such as SVG are ignored)
-- `RESERVED AREA`: **text** written over an area of the theme (the
-  navigation: the elements of `exclude`), reported once per block and per
-  element, whatever the number of parts that element is drawn in. A figure
-  or a background passing under the navigation is not reported: the theme
-  draws its navigation over the content, which is what a full-bleed slide
-  is for
-- `COLLAPSED FIGURE`: an image or a video drawn (almost) without width or
-  height, e.g. in a flex box without a height: invisible
-- `SVG OVERFLOW`: an SVG figure draws beyond its viewBox (by more than the
-  threshold, at its displayed size): what is beyond is cut. For an SVG image,
-  its pixels drawn outside the viewBox are measured on a copy of its file (an
-  SVG without viewBox needs its width and height in px); for an inline SVG,
-  the boxes of its elements beyond its own box (unless its overflow is visible).
-- `INTERNAL COLLISION`, `INTERNAL CLIPPED`: the same checks between the inner
-  blocks of a block (two items of a list, a formula and its text...); at most
-  400 inner blocks per page.
-- `COLUMN OVERFLOW`: content wider than its column (`.col`, `.column`).
-
-Warnings:
-
-- `TIGHT`: the line box of a text overlaps another text or an image by less
-  than 0.4× the font size: the glyphs usually do not touch, but the spacing
-  is tight. Text on the background of another block is not an overlap (only
-  hidden text matters there).
-- `NEAR-ALIGNED`: an edge or the center of a block is 3 to 12 px away from
-  that of another block, of the usable area, or of a column of the deck:
-  align it exactly, or move it clearly. Only edges whose position is
-  meaningful are compared: edges of images filling their box and of
-  backgrounds/borders, the aligned side of text (left, right or center,
-  from `text-align`); tops and bottoms only between blocks side by side.
-  A block laid over the page (the same overlay as `OUT OF AREA`) takes no
-  part on either side: it is positioned against the page, not in the grid
-  of the content.
-- `DENSE` (more than `max_words` words of text) and `SMALL FONT` (text
-  smaller than `min_font` px, only when `design_rules.enabled` is false), on
-  slides only.
-- `WRAPPED`: a title on several lines, or a list item (paragraph, credit or
-  reference) whose second line holds only a few words.
-- `SHORT WRAPPED`: a list item (paragraph, credit or reference) on several
-  lines that would fit on one line of the slide: its width on one line is at
-  most the width from its left edge to the right of the usable area. The
-  report gives that width, the width available and the difference: give the
-  element that width (another layout, a wider column) or shorten the text.
-- `ROW`: figures side by side whose tops (or bottoms) differ by 3 to 40 px.
-- `SMALL IN ITS BOX` / `CROPPED`: a figure drawn on less than 75 % of its
-  box, or cut, by `object-fit` (e.g. in `media::`: use `media::(.fill)` or
-  another arrangement).
-- `SVG LABEL`: a text of an SVG figure drawn across one of its lines (a line,
-  path, circle... with a stroke), without a halo that keeps it readable
-  (`paint-order="stroke" stroke="white"`).
-- `DESIGN`: checks by role. Text smaller than the minimum of its role (body,
-  caption, reference, code), title not larger than the body or on more than 2
-  lines, caption larger than the body or far from its figure, tiny figure. The
-  role comes from the element: `.credit`, `.legende`, `figcaption` are
-  captions, `.source`, `.reference` references; `data-lhtml-role` sets it
-  (`decorative` exempts an ornament). Inside a block laid over the page (the
-  same overlay as `OUT OF AREA`) the role is not guessed: it is `decorative`,
-  so a timer, a page number or a watermark is not judged as content. Write
-  `data-lhtml-role` on it to have it judged. These checks replace `SMALL FONT`
-  unless `design_rules.enabled` is false.
-- `CANVAS OVERLAP`: text over a canvas or an animated demo. The box of a
-  canvas does not say which pixels are drawn: look at the render.
-- `INTERNAL TIGHT`: `TIGHT` between inner blocks.
-
-A formula is one box for `WRAPPED` and `SHORT WRAPPED`: its sums, indices and fractions are not
-lines of text.
-
-Each page report also gives its density: words (math and code excluded),
-formulas, lines of code, list items, lines of text, smallest font size, the
-parts of the area covered by text and images, and the largest free area.
-
-Renders are reproducible: videos are measured at their first frame, animated
-GIFs at their first image, CSS animations stopped. A page whose media could
-not be measured says so (`Report validity`, and `render_health` in
-`layout.json`): a video measured before it loaded has the default box of the
-browser, not the one of the slide, so the checks of that page are computed
-on a rectangle it never shows. `changes.md` lists what
-changed since the previous report for the pages measured again: the problems
-that appeared or were solved, the counts of warnings and of values written
-by hand, the blocks moved or resized (matched by their signature), added or
-removed.
-
-Differences with the deck: the usual values of the deck are measured over
-all its pages (`summary.md`, `deck.json`): page title variants (heading tag
-and font size used on at least 3 pages) with their position (left edge or
-center, top or middle: whichever varies least), columns (left edges of
-in-flow blocks shared by at least a quarter of the pages), body font size
-and the text sizes used on several pages, gap below the title, words per
-page and occupancy. A page is compared with them: `TITLE POSITION`,
-`TITLE VARIANT` (title of an unusual kind or size), `TITLE GAP`, `TEXT FONT`
-(text in a size used nowhere else). These are not errors, but breaks of
-consistency to check.
-
-Only what is actually drawn counts (the *ink* of a block): text lines, images
-reduced to their drawn shape (16 px cells; uniform or transparent background
-removed), backgrounds and borders. Each block is described by a list of typed
-ink rectangles (`"ink"` in `layout.json`), so invisible full-width boxes and
-the empty corners of an irregular block do not create collisions. Empty
-blocks (`::nl`, `div[height:...]`) are `spacer`s and are ignored.
-
-An overlap can be intentional (zoom inset over an image, annotation placed on
-a figure): add the class `overlay` to one of the blocks, e.g.
-`::(.overlay)[position:fixed; ...]`. The overlap is then listed as
-`INTENTIONAL OVERLAP` in the `Notes` section instead of the problems
-(hidden text is still reported).
-
-A block is a top-level element of the page: title, paragraph or bare text,
-list, code block, image, video, math, or a `div::` / `::[...]` with all its
-content. An element placed out of the flow (`position: fixed` or `absolute`)
-inside a block is measured as a block of its own (`in #n` in the table), so
-that it collides with the text of its block. Each block gives the line of the
-source where it starts (column `line`, from the source map below), and its
-signature (tag, inline style, beginning of the text, image names).
-
-**Source map.** In the builds for development (`--layout`, `--serve`,
-`--watch`), the blocks of the pages carry `data-lhtml-src="<file>:<line>"`:
-the line of the template where they start. The blocks are the children of
-the content root the theme declares (`layout: root:` of its `theme.yaml`),
-or of the wrapper of the theme that holds all the content. The generator marks the
-lines of the templates with invisible characters before Jinja and LHTML, then
-moves them to the attribute (`lhtml_site/source_map.py`); the lines inside a zone
-that LHTML keeps as it is (code block, multi-line Jinja or HTML tag, math)
-and inside the Jinja blocks whose content is a value (`{% set x %}`,
-`{% markdown %}`, `{% filter %}`) are not marked. A block written on one line
-in HTML or by a macro (`{{ box() }}`) gets its own line. Without the
-attributes, the HTML is the same as in a normal build.
-
-**Validity of the reports.** Each build records the files that each page
-depends on (template, includes, configuration, design, theme, plugins, its
-assets, the files its scripts request) with their SHA-256, in
-`.verification/builds.json`. `--only` then also rebuilds and measures the pages
-whose dependencies changed. A change of what all pages share (theme,
-configuration, design, plugins, the generator itself) rebuilds and measures
-all of them, once. A report kept from a previous build gives its validity in
-`layout.md` (`current`, `stale` or `unknown` for a remote file). One build at a
-time writes the report: a second one waits for the first (at most 10 min).
-
-**Pages that load asynchronously.** The measure waits for the load of the
-page and of its local frames, for the fonts and the images, then for a short
-network idle and a settling delay. A page or a demo that prepares itself
-asynchronously can say when it is ready: the measure then waits for its
-promises (a rejected promise, or more than 15 s, fails the measure of the
-page), and skips the delays when every frame of the page does so and none
-plays a video or a sound. The slides theme loads
-`themes/slides/js/readiness.js`; a demo in an iframe loads it too, from
-`theme/js/readiness.js` of the site:
-
-```js
-window.__lhtmlReady.optIn();
-window.__lhtmlReady.waitUntil(loadAndPrepareTheDemo());   // a promise
-```
-
-Typical loop with an LLM (e.g. Claude Code): "read `.layout/summary.md` and
-the contact sheets, fix the collisions and overflows by editing the sources
-(positions, widths, font sizes), run `lhtml-site --only <slide> --layout` and
-check the new report".
-
-Options (`configure.yaml`):
-
-```yaml
-layout:
-    # these four describe the theme and are declared in its theme.yaml
-    # (see Theme); set them here only to override what the theme says
-    root: 'body'                # content root
-    exclude: 'nav, footer'      # children of the root that are not content
-    width: 1920                 # viewport size
-    height: 1080
-    images: render              # render.png and the contact sheets; true: also overlay.png, blocks.png,
-                                # internal-overlay.png; false: no image (the fastest)
-    threshold: 4                # minimal overlap / overflow reported (px)
-    output: '.layout/'
-    max_words: 80               # DENSE above this number of words per slide
-    min_font: 20                # SMALL FONT below this font size (px), when design_rules is disabled
-    contact_columns: 4          # thumbnails per row and rows per contact sheet
-    contact_rows: 4
-    jobs: auto                  # pages measured at the same time (a window each); auto: half of the processors, at most 6
-    design_rules:               # DESIGN checks (defaults at 1920 px, scaled with the width)
-      enabled: true
-      roles:
-        body: {min_font: 20}
-        caption: {min_font: 12, max_body_ratio: 1.05, max_figure_gap: 64}
-        title: {min_font: 32, min_body_ratio: 1.25, max_lines: 2}
-        figure: {min_extent: 32}
-      layouts:                  # per layout (exact name, e.g. side-s)
-        section:
-          title: {min_body_ratio: 1.5}
-```
-
-A check set to `null` is disabled; an unknown key or an invalid limit is an
-error of the configuration.
-
-## Error Reporting
+## Error reporting
 
 A problem is one line, `file:line:column: level: message`, the line being
 the one of the source of the page (not of the HTML Jinja wrote), as far as
@@ -1100,38 +847,4 @@ names the page alone; in a build for development (`--serve`, `--watch`,
 `--layout`) the source map names the file and line of an included template
 too. A path is never cut, and colour is used on a terminal only.
 
-Errors are non-fatal — the generator continues processing remaining files (a page whose Jinja2 rendering fails is skipped), then exits with code 1 if any page or plugin failed (missing plugin, exception in a plugin; use `-d` to see the traceback). Errors of the deck start with `Deck:` and errors of the design with `Design:`.
-
-## Migrating from the previous layout
-
-lhtml-site 1.0, the first version as a package and built on LHTML 3, breaks
-with the old generator: an old form is refused by name, with the change to
-make, rather than accepted with a warning.
-
-- `lhtml-site init DIR` copies a few pages to start from into `DIR/src/` (four slides with
-  `--theme slides` or `slides-pdf`, two pages with `webpage-frame`), instead of the course example
-  into `DIR/example/`. The course example, with its videos, is no longer in the package: it is in
-  `src/lhtml_site/example/` of a checkout (see [From a checkout](../../../README.md#from-a-checkout)).
-- The themes ship their fonts as WOFF2 only (`fonts/*/WOFF2/TTF/`), which every current browser
-  and the Chrome of the PDF export read: a theme of your own that copied `css/font.css` and named
-  the OTF, TTF or WOFF files of the generator names the WOFF2 ones.
-
-- The generator is a package, `lhtml-site` (`pip install`, command `lhtml-site`): its code is in `src/lhtml_site/` (the package `lib` is now `lhtml_site`: a plugin or a script that imported `from lib.structure import ...` imports `from lhtml_site.structure import ...`), with its `themes/`, `plugins/` and `configure_example.yaml` (the course example stays in the checkout, `src/lhtml_site/example/`, and is not installed). `python generate.py` in a checkout still runs it, and the paths `<checkout>/themes/...` and `<checkout>/plugins/...` of a configuration still find these files. A configuration that names a theme of the generator can name it alone (`theme: slides`), which works from a checkout and from an installation. `configure_example.yaml` is no longer at the root: `lhtml-site init` sets up a project (see [Getting started](../../../README.md#getting-started-your-first-slides)).
-
-- `configure_default.yaml` is now `configure_example.yaml`.
-- Replace `plugin_post` with `plugin` (all the hooks of a plugin run). `include_head` is gone (it was read nowhere).
-- `.site/` is the output default; an explicit `site_directory` still takes precedence.
-- `level_print` is gone: the build prints no indented log (`-v` shows its stages).
-- A plugin is a transformation, `pre_process(text, context) -> text` (and `prepare`, `mid_process`, `post_process`, see [Plugins](#plugins)): it no longer receives `meta`, reads or writes the files of the site, nor uses the log. `pre_process(meta)` is refused with the form to write.
-
-- LHTML is now installed with pip (`lhtml-markup`, see `requirements.txt`) instead of the `lib/lhtml` submodule.
-- `theme_templates/` was renamed `themes/` and `src_site_example/` was renamed `example/`: update the configuration, e.g. `theme: 'static_website_lhtml/themes/webpage-frame/'`.
-- Light mode (`-l`) was removed: it copied the whole previous site and was not faster than a full build. Use `--only <page>` to regenerate some pages.
-- Deck parameters of a page are read as `params.<name>` (not as top-level variables).
-- `auto_wrap.py` (or `auto-wrap.py`), `redirection_first_page.py` and `cache_video.py` are no longer plugins either: remove them from `plugin:`, which is then usually empty. The transcoded videos are asked for by setting `cache_video_directory:` (the plugin used to fall back to a default directory and say so); without it, nothing is transcoded.
-- The menu of the theme and the heading ids are no longer plugins: remove `plugins/menu.py` and `plugins/title_submenu.py` from `plugin:`. The build runs them itself, and the theme declares whether it has a menu (`toc:` in its `theme.yaml`). The extra page settings the menu carried move from `plugin_arg: menu: keys:` to `toc: keys:` of the theme. Both old spellings are refused by name.
-- The layout report is no longer a plugin: remove `plugins/layout_report.py` from `plugin:` and run the build with `--layout`. Its options move from `plugin_arg: layout_report:` to the configuration key `layout:`. Both old spellings are refused by name, with the change to make; `--check-config` reports them without building anything.
-- `generate_pdf.py` is no longer a plugin: the PDF is a target, `targets: pdf: {theme: slides-pdf}` (the theme declares `export: pdf`), named after its deck. A script that looped over the chapters with a temporary configuration per chapter and per theme is replaced by `decks: directories` and `targets:` (see [Decks and targets](#decks-and-targets)).
-- LHTML 3.0 reads no file: `include::` is refused, with the file it named. Include with Jinja instead, `{% include "part.html" %}` (the path is relative to the sources). A poster is no longer looked for next to a video: write it, `video::clip.mp4{poster="clip.jpg"}`. `wrap-auto` and `directory_include` are no longer passed to LHTML: the theme wraps the page. LHTML 3 also refuses `::name[-]` and `::[-]` (close with `::`), `::#` comments (write `{# ... #}`) and `verbatim::` (write `code::[text]`); `$...$` is text (write `\(...\)`), and a tag inside inline code is literal. The YAML front matter of a page is read by the generator, which removes it before LHTML.
-- For plugins: the directories of `meta` (`source_directory`, `site_directory`, `theme`, `config_directory`, `lib_directory`, `cache_video_directory`) are `pathlib.Path`: join with `/` (`meta['site_directory'] / page_path(entry)`), not `+`. The place of a page in the site stays a string with `/` (`entry['dir']`, `page_path(entry)` of `lhtml_site.structure`).
-- Heading anchors keep the scheme of the generator copied into projects since April 2026 (` -,.:()` become `_`, then `__` becomes `_`): a site built by an older copy changes the id of its headings with these characters (`Part - One`: `part___one` before, `part__one` now). Identical headings, or a heading that starts like another one (`= Installation` / `== Installation sous Windows`), get distinct ids, and characters such as `<`, `>`, `"` are removed from ids.
+Errors are non-fatal — the generator continues processing remaining files (a page whose Jinja2 rendering fails is skipped), then exits with code 1 if any page or plugin failed (missing plugin, exception in a plugin; use `-d` to see the traceback). With `--strict`, a warning fails the build too. Errors of the deck start with `Deck:` and errors of the design with `Design:`.
