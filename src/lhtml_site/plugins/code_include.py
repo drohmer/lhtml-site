@@ -52,8 +52,8 @@ def analyse_includeadv_match(file_content, it):
     arg_includeadv = {}
     tokens = split_group_with_quote(written.braces, ",")
     for token in tokens:
-        k, v = token.split(':')
-        k = k.strip()
+        k, v = token.split(':', 1)
+        k, v = k.strip(), v.strip()
         if v.startswith("'") or v.startswith('"'):
             v = v[1:-1]
         arg_includeadv[k] = v
@@ -146,7 +146,8 @@ def research_line_in_header_files(arg):
 
 def prepare(context):
     """The repositories of `plugin_arg: includeadv:` ({name: git URL}), cloned
-    into code/ next to the configuration, or updated."""
+    into code/<name> next to the configuration, or updated. The paths of the
+    pages start with that name, whatever the repository is called."""
     global CODE_DIRECTORY
     CODE_DIRECTORY = (context.config_directory / 'code').as_posix() + '/'
     for codename, url in context.options.get('includeadv', {}).items():
@@ -155,7 +156,7 @@ def prepare(context):
             subprocess.run(['git', 'pull'], cwd=code_dir)
         else:
             os.makedirs(CODE_DIRECTORY, exist_ok=True)
-            subprocess.run(['git', 'clone', url], cwd=CODE_DIRECTORY)
+            subprocess.run(['git', 'clone', url, codename], cwd=CODE_DIRECTORY)
 
 
 def mid_process(html, context):

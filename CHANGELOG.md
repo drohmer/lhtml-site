@@ -5,6 +5,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- `code_include.py`: the repository of `plugin_arg: includeadv: {name: url}`
+  is cloned into `code/<name>`, the folder the pages read and the next
+  build updates (it was cloned under the name of the repository: the
+  pages did not find their files, and the next build failed). A space
+  after the `:` of a key (`includeadv::{filepath: 'f.hpp'}`) is read.
+- The `docs` theme: the search box has the id `site-search`, so that a
+  heading "Search" (`#search`) keeps its own.
+- The reference and `configure_example.yaml` give the pipx commands of
+  `lhtml-site doctor`: pypdf and playwright injected one after the other
+  (`--include-apps` fails on pypdf), `--include-apps` for ffpb.
+
 ## [1.1.0] - 2026-10-31
 
 ### Added

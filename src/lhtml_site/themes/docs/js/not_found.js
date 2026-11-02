@@ -53,7 +53,7 @@
 
   // the search box of the page: the words of the URL, searched with the top bar
   const query = document.querySelector('#not-found-query');
-  const search = document.querySelector('#search');
+  const search = document.querySelector('#site-search');
   if (query && search) {
     query.value = askedWords.join(' ');
     query.addEventListener('input', () => {

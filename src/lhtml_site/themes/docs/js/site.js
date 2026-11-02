@@ -170,7 +170,7 @@
 
   // ---- search (Pagefind) ----------------------------------------------
   // The index is built after the site: pagefind --site <site directory> (README of the theme).
-  const input = $('#search'), panel = $('#search-results');
+  const input = $('#site-search'), panel = $('#search-results');
   // Sub-results come in page order; show the one whose title is the query first.
   const exactFirst = (subs, q) => {
     const k = q.trim().toLowerCase();

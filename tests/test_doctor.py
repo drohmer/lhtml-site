@@ -27,6 +27,22 @@ class InstallHintTest(unittest.TestCase):
     def test_this_checkout_is_seen_as_one(self):
         self.assertEqual(doctor.installation(), 'checkout')
 
+    def test_the_documents_give_the_commands_of_the_doctor_after_pipx(self):
+        """pipx refuses `--include-apps` on a package without a command (pypdf):
+        the reference and the example configuration inject each package as the
+        doctor does."""
+        package = REPO / 'src/lhtml_site'
+        reference = ' '.join((package / 'docs/reference.md').read_text(encoding='utf-8').split())
+        example = ' '.join(line.lstrip('# ') for line in
+                           (package / 'configure_example.yaml').read_text(encoding='utf-8').splitlines())
+        with patch.object(doctor, 'installation', return_value='pipx'):
+            pdf = doctor.playwright_install_command().split(', then ') + [doctor.playwright_browser_command()]
+            ffpb = doctor.install_hint('ffpb', command=True)
+        self.assertNotIn('playwright pypdf', reference)
+        for command in pdf:
+            self.assertIn(f'`{command}`', reference)
+        self.assertIn(ffpb, example)
+
 
 class LookupTest(unittest.TestCase):
 

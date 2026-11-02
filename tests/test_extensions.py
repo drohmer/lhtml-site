@@ -129,5 +129,29 @@ class ExtensionTests(unittest.TestCase):
         self.assertNotIn('includeadv', html)
 
 
+    def test_code_include_clones_each_repository_under_its_key(self):
+        """`plugin_arg: includeadv: {course: <url>}`: the repository is cloned into
+        code/course, whatever its name, and updated by the next build."""
+        repository = self.root / 'repos/course-code'
+        self.write('repos/course-code/f.hpp', 'int foo();\nint bar(int x);\n')
+        for command in (['init', '-q'], ['add', '.'],
+                        ['-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'f']):
+            subprocess.run(['git'] + command, cwd=repository, check=True, capture_output=True)
+        self.write('src/a/index.html.j2', "= A\ncode::[c++]\n"
+                                          "includeadv::{filepath: 'course/f.hpp', research: 'bar'}\ncode::[-]\n")
+        self.write('c.yaml', yaml.safe_dump({'source_directory': 'src', 'site_directory': 'site',
+                                             'plugin': ['plugins/code_include.py'],
+                                             'plugin_arg': {'includeadv': {'course': repository.as_uri()}}}))
+        for build in ('clone', 'pull'):
+            result = subprocess.run([sys.executable, str(REPO / 'generate.py'), '-i', 'c.yaml'],
+                                    cwd=self.root, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, build + ': ' + result.stdout + result.stderr)
+            self.assertTrue((self.root / 'code/course/f.hpp').is_file())
+            html = self.html('a')
+            self.assertEqual(html.count('bar'), 1)          # the line found, highlighted
+            self.assertNotIn('foo', html)
+            self.assertNotIn('includeadv', html)
+        self.assertFalse((self.root / 'code/course-code').exists())
+
 if __name__ == '__main__':
     unittest.main()

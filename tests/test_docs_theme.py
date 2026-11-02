@@ -115,6 +115,21 @@ def test_the_settings_reach_the_pages(starter):
     build(starter, {})                                          # back to the defaults
 
 
+def test_a_heading_search_does_not_take_the_id_of_the_search_box(tmp_path):
+    """A heading "Search" with the id `search` (here given, a slug in a page that
+    includes a README): the search box has another one, so that `#search` leads to
+    the heading and the ids of the page stay unique."""
+    project = tmp_path / 'my-docs'
+    subprocess.run(GENERATE + ['init', str(project), '--theme', 'docs'], check=True, capture_output=True)
+    page = project / 'src/01_start/01_install/index.md.j2'
+    page.write_text(page.read_text(encoding='utf-8') + '\n## Search {: #search}\n\nThe search box.\n', encoding='utf-8')
+    html = (build(project) / '01_start/01_install/index.html').read_text(encoding='utf-8')
+    ids = re.findall(r'\sid="([^"]+)"', html)
+    assert ids.count('search') == 1 and len(ids) == len(set(ids))
+    assert re.search(r'<h2[^>]* id="search"', html)
+    assert '<input id="site-search" type="search"' in html
+
+
 # ---- in Chromium ---------------------------------------------------------------------
 
 browser_test = pytest.mark.skipif(os.environ.get('LHTML_BROWSER_TEST') != '1',

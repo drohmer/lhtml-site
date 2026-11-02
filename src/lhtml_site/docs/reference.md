@@ -193,8 +193,9 @@ _site/01_procedural/images/slide_000.jpg ...
 - The site of a deck for a target is `<site>/<deck>/<target>/`. A target
   whose theme declares `export: pdf` is rendered to `<site>/<deck>/<deck>.pdf`
   and `images/`, and its site is not published. The export runs Chromium
-  through Playwright (`pipx inject --include-apps lhtml-site playwright pypdf`,
-  then `playwright install --only-shell chromium`; with pip,
+  through Playwright (`pipx inject lhtml-site pypdf`, then
+  `pipx inject --include-apps lhtml-site playwright` and
+  `playwright install --only-shell chromium`; with pip,
   `pip install "lhtml-site[pdf]"` then
   `python -m playwright install --only-shell chromium`). `lhtml-site doctor`
   says what is missing.
