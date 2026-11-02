@@ -3,7 +3,10 @@
 [![Tests](https://github.com/drohmer/lhtml-site/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/drohmer/lhtml-site/actions/workflows/tests.yml)
 [![PyPI](https://img.shields.io/pypi/v/lhtml-site)](https://pypi.org/project/lhtml-site/)
 
-**Documentation, with a tutorial and live examples: https://scholartools.fr/lhtml/** (English, français)
+**Documentation: https://scholartools.fr/lhtml/** (English, français). Start with
+[Get started](https://scholartools.fr/lhtml/01_start/) (your first slides in five minutes), then
+the [recipes](https://scholartools.fr/lhtml/03_recipes/): a course website, a talk with videos, a
+PDF, putting it online. [Live examples](https://scholartools.fr/lhtml/01_start/05_made-with-lhtml/).
 
 Write your talks and course websites as short text files: lhtml-site turns
 them into slides shown in the browser, a PDF of the slides, or a website
