@@ -821,7 +821,8 @@ warning with the error.
 writes or edits slides: plan in the deck, layouts and macros, `--only
 --layout`, `--lint`, how to read the report and when to stop. It does not
 depend on the agent used. Each build copies it into `.structure/agents.md` of
-the site, and the layout report links to it. In a slide project, one line in
+the project, next to the configuration (not into the site), and the layout
+report links to it. In a slide project, one line in
 the file that your agent reads (`AGENTS.md`, `CLAUDE.md`, ...) is enough:
 
 ```

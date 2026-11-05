@@ -1,10 +1,11 @@
 # Writing slides with lhtml-site: guide for AI agents
 
 This guide is for an agent (LLM) that writes or edits the slides of a
-project built with lhtml-site. It is copied into every built site
-as `.structure/agents.md`, next to the configuration. The README of the
-generator is the full reference;
-this page is the procedure.
+project built with lhtml-site. Each build copies it into the project, as
+`.structure/agents.md` next to the configuration. The full reference is
+[reference.md](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/reference.md),
+with [advanced.md](https://github.com/drohmer/lhtml-site/blob/main/src/lhtml_site/docs/advanced.md)
+for the layout report; this page is the procedure.
 
 ## The project
 
