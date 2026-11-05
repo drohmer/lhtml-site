@@ -323,7 +323,9 @@ An overlap can be intentional (zoom inset over an image, annotation placed on
 a figure): add the class `overlay` to one of the blocks, e.g.
 `::(.overlay)[position:fixed; ...]`. The overlap is then listed as
 `INTENTIONAL OVERLAP` in the `Notes` section instead of the problems
-(hidden text is still reported).
+(hidden text is still reported). `Notes` also lists `BACKGROUND OVERLAP`: a
+block over the part of an image that is only its background (uniform or
+transparent), not visible, but the box of the image is reserved there.
 
 A block is a top-level element of the page: title, paragraph or bare text,
 list, code block, image, video, math, or a `div::` / `::[...]` with all its

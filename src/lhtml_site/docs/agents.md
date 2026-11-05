@@ -174,20 +174,28 @@ reported.
   it.
 - `CLIPPED`: content cut by `overflow`.
 - `UPSCALED IMAGE`: a bitmap or video enlarged above 1.25×, so it looks blurry.
-- `RESERVED AREA`: content over the navigation of the theme.
+- `RESERVED AREA`: text over the navigation of the theme.
 - `COLLAPSED FIGURE`: an image or video drawn without width or height (invisible).
 - `SVG OVERFLOW`: an SVG figure draws beyond its viewBox, so it is cut.
+- `INTERNAL COLLISION`, `INTERNAL CLIPPED`: the same between the inner
+  blocks of a block (two items of a list, a formula and its text).
+- `COLUMN OVERFLOW`: content wider than its column (`col::`).
 
 **Warnings** should be checked:
-- `TIGHT`: lines too close to another block.
+- `TIGHT`: lines too close to another block; `INTERNAL TIGHT`: the same
+  between inner blocks.
 - `NEAR-ALIGNED`: edges a few pixels apart; align them exactly or move them
   clearly. A block laid over the page (see `OUT OF AREA`) is left out: it is
   positioned against the page, not in the grid of the content.
 - `DENSE`: too many words.
-- `SMALL FONT`: text too small for its role (body, caption, code...). Inside
-  a block laid over the page (see `OUT OF AREA`) the role is not guessed:
-  a timer or a page number is decorative and is not judged. Write
-  `data-lhtml-role` on it to have it judged.
+- `DESIGN`: checks by role: text smaller than the minimum of its role
+  (body, caption, reference, code), a title not larger than the body or on
+  more than 2 lines, a caption larger than the body or far from its figure,
+  a tiny figure. Inside a block laid over the page (see `OUT OF AREA`) the
+  role is not guessed: a timer or a page number is decorative and is not
+  judged. Write `data-lhtml-role` on it to have it judged. (`SMALL FONT`,
+  text below `min_font`, replaces these checks when `design_rules` is
+  turned off.)
 - `WRAPPED`: a title on several lines, or an item with a few words on its
   second line: shorten it, or give it more width.
 - `SHORT WRAPPED`: text on several lines that would fit on one line of the
@@ -197,6 +205,8 @@ reported.
   (`media::(.fill)`, or another arrangement), or cut.
 - `SVG LABEL`: a label of an SVG figure drawn across one of its lines: move
   it, or give it a halo (`paint-order="stroke" stroke="white"`).
+- `CANVAS OVERLAP`: text over a canvas or an animated demo: the report cannot
+  see what the canvas draws, look at the render.
 
 A figure you made (an SVG): check it alone with `--render` before placing it;
 the report sees its overflow and its labels, not whether it reads well.
