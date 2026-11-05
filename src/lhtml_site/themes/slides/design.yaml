@@ -3,7 +3,7 @@
 # Override any value in the `design` key of configure.yaml (or give the path of
 # another YAML file there); a value null removes a macro. The generator writes
 # theme/css/design.css (tokens as CSS variables, then the css of each macro)
-# and `--layout` writes the reference of the macros in .layout/design.md.
+# and each build writes the reference of the macros in .structure/design.md.
 #
 # Default values: most frequent idioms of 904 slides (4 decks, 2026).
 # Coordinates in px of the 1920x1080 slide.

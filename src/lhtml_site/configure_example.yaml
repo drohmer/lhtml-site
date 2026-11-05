@@ -28,6 +28,7 @@ site_directory: '.site/'
 #   webpage-frame  web pages with a navigation menu
 #   slides         slides shown in the browser (1920x1080)
 #   slides-pdf     the same slides, exported to a PDF (needs Playwright, lhtml-site[pdf]: lhtml-site doctor)
+#   docs           a documentation site: sections, search, "On this page"
 theme: 'webpage-frame'
 
 # ---------------------------------------------------------------------------

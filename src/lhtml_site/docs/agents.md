@@ -33,7 +33,7 @@ either:
 | `generate.py` | Full build (a few seconds) |
 | `generate.py --only 03_part/04_slide` | Build these slides only (pointers as in the deck; repeatable) |
 | `generate.py --only 03_part/04_slide --layout` | Build and measure them: layout report in `.layout/` |
-| `generate.py --layout` | Measure the whole deck (slow: about 1 s per slide) |
+| `generate.py --layout` | Measure the whole deck (26 s for 78 slides; a slide that did not change is not measured again) |
 | `generate.py --lint` | List the values written by hand, with their replacement (no build) |
 | `generate.py --scaffold` | Create the planned slides of the deck (entries with a `title` and no source yet) |
 | `generate.py --check-config` | Check the configuration, deck and design without building |
@@ -68,7 +68,8 @@ slides named.
 2. Write the content with the macros of `design.md`. Do not write positions,
    pixel sizes, spacers or font sizes.
 3. Run `--only <slide> --layout`, then read
-   `.layout/pages/<slide>/index.html/layout.md`. Look at `render.png` in the
+   `.layout/pages/<slide>/index.html/layout.md` (in a project of several decks
+   or targets, under `.layout/<deck>/<target>/`). Look at `render.png` in the
    same directory when the text is not enough; with `images: true` in the
    `layout:` of the configuration, `overlay.png` numbers the blocks.
 4. Fix the problems, then repeat step 3.
@@ -93,7 +94,9 @@ A layout places and sizes the blocks of a slide. Its figures go in
 | (none) | Text only, text + code, columns (`cols::` / `col::`). |
 
 ```
-{% set layout = 'side' %}
+---
+layout: side
+---
 = Forward kinematics
 
 * Each joint angle is set by hand

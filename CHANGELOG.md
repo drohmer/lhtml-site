@@ -42,6 +42,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The reference and `configure_example.yaml` give the pipx commands of
   `lhtml-site doctor`: pypdf and playwright injected one after the other
   (`--include-apps` fails on pypdf), `--include-apps` for ffpb.
+- The guide for agents (`.structure/agents.md`, copied into each project)
+  lists every finding of the layout report (the internal ones, `COLUMN
+  OVERFLOW`, `DESIGN`, `CANVAS OVERLAP`), says where the report of a
+  project of several decks is, and points to the reference instead of the
+  README. The reference says that `.structure/` is next to the
+  configuration (not in the site), that a figure in code is made again when
+  a file of its directory changes, and quotes the real warning of an
+  unknown variant; `configure_example.yaml` lists the `docs` theme.
 
 ## [1.1.0] - 2026-10-31
 

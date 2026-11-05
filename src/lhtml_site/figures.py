@@ -9,8 +9,9 @@ latex and dvisvgm. The page uses the figure as any other: `img::assets/rotation.
 
 The figures are made in the site, after the copy of the sources, and kept in
 a cache (.figures/ next to the configuration) under the hash of their
-script: a figure is made again only when its script changes (delete .figures/
-to make them all again, e.g. after a change of the data they read).
+script and of the files of its directory: a figure is made again when one of
+them changes (delete .figures/ to make them all again, e.g. after a change of
+data read from elsewhere).
 """
 from __future__ import annotations
 

@@ -811,8 +811,9 @@ matplotlib). `<name>.svg.tex` is a standalone LaTeX document (TikZ) made into
 SVG with `latex` and `dvisvgm`. The page uses the figure as any other
 (`img::assets/curve.svg`). Figures are made in the site, never in the
 sources, and kept in `.figures/` next to the configuration under the hash of
-their script: a figure is made again when its script changes (delete
-`.figures/` after a change of the data it reads). A figure that fails gives a
+their script and of the files of its directory: a figure is made again when
+its script or one of those files changes (delete `.figures/` after a change
+of data read from elsewhere). A figure that fails gives a
 warning with the error.
 
 ## Writing slides with an AI agent
@@ -837,7 +838,7 @@ it is known. A build ends with one line: the pages built, the warnings,
 the time, and where the site (or the PDF) is. The stages print with `-v`.
 
 ```
-src/01_intro/03_noise/index.html.j2:12:1: warning: gap::zz: unknown variant (expected one of s, m, l, xl) near 'gap::zz'
+src/01_intro/03_noise/index.html.j2:12:1: warning: gap::zz: unknown variant, expected one of s, m, l, xl
 src/01_intro/04_grid/index.html.j2:7: error: Jinja: 'missing' is undefined
 error: deck 01_intro target html: build failed (previous site kept): 1 page(s) failed
 deck 02_shapes target html: 12 page(s) built in 1.4s -> _site/02_shapes/html

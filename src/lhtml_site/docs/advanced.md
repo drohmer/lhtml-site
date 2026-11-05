@@ -409,8 +409,9 @@ layout:
           title: {min_body_ratio: 1.5}
 ```
 
-A check set to `null` is disabled; an unknown key or an invalid limit is an
-error of the configuration.
+A check set to `null` is disabled; an unknown key or an invalid limit of
+`design_rules` is an error of the configuration. Another unknown key of
+`layout:` is ignored, with a warning.
 
 ## Migrating from static_website_lhtml
 
@@ -419,7 +420,8 @@ with the old generator, static_website_lhtml: an old form is refused by name, wi
 make, rather than accepted with a warning.
 
 - `lhtml-site init DIR` copies a few pages to start from into `DIR/src/` (four slides with
-  `--theme slides` or `slides-pdf`, two pages with `webpage-frame`), instead of the course example
+  `--theme slides` or `slides-pdf`, two pages with `webpage-frame`, three
+  sections with `docs`), instead of the course example
   into `DIR/example/`. The course example, with its videos, is no longer in the package: it is in
   `src/lhtml_site/example/` of a checkout (see [From a checkout](../../../README.md#from-a-checkout)).
 - The default `source_directory` is still `src_site/`, the directory of the old projects; `init`
