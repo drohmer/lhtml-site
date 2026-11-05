@@ -30,19 +30,31 @@ function goPrev() {
     }
 }
 
+// The keys that change the slide: the arrows, and Page Down / Page Up that the remote
+// controls of presentations send
+const NEXT_KEYS = ['ArrowRight', 'ArrowDown', 'PageDown'];
+const PREV_KEYS = ['ArrowLeft', 'ArrowUp', 'PageUp'];
+
+function navigate(key) {
+    if (NEXT_KEYS.includes(key)) {
+        goNext();
+        return true;
+    }
+    if (PREV_KEYS.includes(key)) {
+        goPrev();
+        return true;
+    }
+    return false;
+}
+
 function keyPressed(event) {
 
     if (event.key === 'Control') {
         controlKeyIsPressed = true;
     }
 
-    if ((event.key === 'ArrowRight') || (event.key === 'ArrowDown')) {
-        goNext();
-    }
-    else if ((event.key === 'ArrowLeft') || (event.key === 'ArrowUp')) {
-        goPrev();
-    }
-    
+    navigate(event.key);
+
 }
 
 function keyReleased(event) {
@@ -120,6 +132,68 @@ function ownsHorizontalGesture(element) {
     }
     return false;
 }
+
+
+// A demo in an iframe (demo::) takes the keyboard once it is clicked: its page gets the keys,
+// not the slide. The slide listens to the keys of its demos, so that the arrows and Page Down /
+// Page Up still change the slide; a demo that uses a key for itself calls preventDefault().
+// - A demo of the same site: the slide listens in its page, each time it loads.
+// - A demo of another site cannot be listened to: it sends postMessage({slide: {key: 'ArrowRight'}}).
+window.__lhtmlNavigation = true;   // the slide handles the keys of its demos (slide-controls.js checks it)
+
+function editable(element) {
+    return element && element.matches && element.matches('input, textarea, select, [contenteditable]:not([contenteditable="false"])');
+}
+
+function listenToFrame(frame) {
+    let view = null;
+    try {
+        view = frame.contentWindow;
+        view.document;                          // throws for a page of another site
+    }
+    catch (error) {
+        return;
+    }
+    if (!view) {
+        return;
+    }
+    // One listener per page of the frame: the window of a frame may be kept when its first
+    // (empty) page is replaced, so the previous listener is removed before adding it again.
+    // Added after the scripts of the demo, at the end of the propagation: their own listeners
+    // run first and may call preventDefault() to keep a key.
+    if (view.__lhtmlSlideListener) {
+        view.removeEventListener('keydown', view.__lhtmlSlideListener);
+    }
+    view.__lhtmlSlideListener = (event) => {
+        if (event.defaultPrevented || editable(event.target)) {
+            return;
+        }
+        if (NEXT_KEYS.includes(event.key) || PREV_KEYS.includes(event.key)) {
+            event.preventDefault();
+            navigate(event.key);
+        }
+    };
+    view.addEventListener('keydown', view.__lhtmlSlideListener);
+}
+
+function listenToFrames() {
+    for (const frame of document.querySelectorAll('iframe')) {
+        listenToFrame(frame);
+        frame.addEventListener('load', () => listenToFrame(frame));
+    }
+}
+listenToFrames();
+
+window.addEventListener('message', (event) => {
+    const message = event.data && event.data.slide;
+    if (!message || typeof message.key !== 'string') {
+        return;
+    }
+    const fromFrame = [...document.querySelectorAll('iframe')].some(frame => frame.contentWindow === event.source);
+    if (fromFrame) {
+        navigate(message.key);
+    }
+});
 
 
 function menuClick()

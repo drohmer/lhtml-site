@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- The slides theme changes the slide with Page Down / Page Up too, the keys
+  that the remote controls of presentations send.
+- A demo in a slide (`demo::`, or any iframe) no longer keeps the keys of the
+  slides once it is clicked: the slide listens to the keys of its demos of the
+  same site, so that the arrows and Page Down / Page Up still change the
+  slide, once. A demo keeps a key for itself with `preventDefault()`, and the
+  keys typed in one of its fields stay there. A demo of another site posts
+  `{slide: {key: 'ArrowRight'}}` to the slide (`themes/slides/js/navigation.js`).
 - The `docs` theme speaks the language of the site: `lang: fr` writes its
   texts in French (buttons, labels, "On this page", previous / next, the
   404 page...), and `strings:` replaces any of them, key by key

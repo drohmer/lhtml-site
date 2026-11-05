@@ -75,8 +75,9 @@ my-talk/
 `.site/index.html` in your browser, no server needed (in the terminal,
 `open .site/index.html` on macOS, `start .site\index.html` on Windows,
 `xdg-open .site/index.html` on Linux). Go from slide to slide with the
-arrow keys, or with the arrows at the bottom right; the icon next to them
-opens the list of the slides.
+arrow keys or Page Down / Page Up (the keys of a presentation remote), or
+with the arrows at the bottom right; the icon next to them opens the list
+of the slides.
 
 After a change, run `lhtml-site` again and refresh the browser. To rebuild
 without retyping it, run `lhtml-site --watch` instead: it rebuilds the

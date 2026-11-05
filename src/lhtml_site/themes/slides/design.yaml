@@ -268,6 +268,9 @@ macros:
     doc: |
       Interactive demo (HTML page in an iframe): `demo::assets/demo/index.html`, size with
       `demo::url[height:600px;]`. Replaces `<iframe style="overflow:hidden; border:0; width:1750px; height:750px;" ...>`.
+      After a click in the demo, the arrows and Page Down / Up still change the slide, unless the
+      demo keeps the key (`preventDefault()`) or one of its fields has the focus; a demo of another
+      site posts `{slide: {key}}` to the slide.
     css: |
       .demo { display: block; overflow: hidden; border: 0; width: var(--demo-width); height: var(--demo-height); }
 
