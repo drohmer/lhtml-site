@@ -362,6 +362,51 @@ so adding pages of other projects or repeated slides does not change them.
 `--check-config` also reads the deck and the design (sources, macros). Several decks can share
 the same sources (`lhtml-site --deck deck_short.yaml`).
 
+**Parts of a talk.** The slides themes give the slide of a part and the plan
+as templates of the theme: a page includes them, and the deck describes the
+parts. The same source is listed once per part, with `part: true`:
+
+```yaml
+slides:
+  - path: 00_plan                     # = Plan, then {% include 'theme/template/plan.html' %}
+  - {path: 00_part, title: "1. Introduction", part: true, subtitle: "Context and goals"}
+  - 01_introduction
+  - {path: 00_part, title: "2. Methods", part: true, color: "#c44e52",
+     subtitle: "Models, data", summary: "Models and data"}
+  - 02_methods
+```
+
+```
+{% include 'theme/template/part.html' %}
+```
+
+- `theme/template/part.html` shows the number of the part (its rank among the
+  entries with `part: true`), its title (a leading `<number>. `, written for
+  the menu, is not repeated), its `subtitle`, and the list of the parts, the
+  current one marked, each a link to its slide (`index.html`, `index-2.html`,
+  ...: no link to write).
+- `theme/template/plan.html` gives one card per part, a link with its number,
+  its title and its `summary` (else its `subtitle`).
+- `color` sets the color of a part (the token `--color-part`), else a palette
+  of the theme. These settings reach the templates through `site_pages`: the
+  themes declare them in `toc: keys:` (`part`, `subtitle`, `summary`, `color`).
+- The style is the macro `part` of the design (classes `.part`, `.part-num`,
+  `.part-title`, `.part-sub`, `.part-toc`, `.part-plan`, `.part-plan-item`...,
+  listed in `.structure/design.md`); a deck changes it in its `design` or in
+  the `<style>` of its page.
+
+Adding, moving or renaming a part is then one entry of the deck: the slides of
+the parts and the plan follow.
+
+**Jinja and the lines of LHTML.** A `-` in a Jinja tag removes the white space
+on that side, line breaks included: after `{% endfor -%}` or `{% set x = 1 -%}`,
+the next line is glued to the end of the previous one. A line of LHTML that
+must start a line (`= Title`, `* item`, `::`, `code::`) is then in the middle
+of a line, and stays text (the page shows `=(#plan_l1) Plan`). Write `%}`
+without `-` on a Jinja line followed by such a line; `{%-` at the start of a
+tag is what a loop inside a list needs (see [Writing slides with an AI
+agent](#writing-slides-with-an-ai-agent)).
+
 ## Markdown pages
 
 A page is written in LHTML (`index.html.j2`) or in Markdown (`index.md.j2`):

@@ -4,6 +4,7 @@ template: 'theme/template/base.html'
 content_block: 'content'
 toc:
   file: 'js/menu.js'   # receives the table of contents ({{TOC}})
+  keys: [part, subtitle, summary, color]   # the parts of the talk (template/part.html, plan.html)
 layout:
   root: 'body'            # the slide itself is the content
   exclude: 'nav, footer'  # the navigation of the theme is not

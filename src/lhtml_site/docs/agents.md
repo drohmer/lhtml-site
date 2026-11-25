@@ -151,6 +151,12 @@ stands for a figure that does not exist yet.
 - A repeated slide reads its parameters as `params.name`
   (`{% set current = params.current | default(0) %}`).
 - Jinja loops inside an LHTML list need `{%-` to avoid breaking the list.
+- Never end with `-%}` (or `-#}`) a Jinja line followed by a line of LHTML that must
+  start a line (`= Title`, `* item`, `::`): the `-` glues that line to the previous one,
+  and it stays text.
+- Parts of a talk: one source including `theme/template/part.html`, listed once per part
+  in the deck with `part: true` (`subtitle`, `color`, `summary`); the plan includes
+  `theme/template/plan.html`. No list of the parts, no link to write.
 
 ## Reading the layout report
 

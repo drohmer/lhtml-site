@@ -1,0 +1,14 @@
+{#- The plan of the talk: one card per part, a link to its slide. A page includes it,
+    {% include 'theme/template/plan.html' %}, under its own title (= Plan). The parts are the
+    entries of the deck with `part: true`, as for theme/template/part.html; a card shows the
+    `summary` of the part, else its `subtitle` (docs/reference.md, Parts of a talk).
+    Raw HTML only: no LHTML line marker follows a Jinja tag here. -#}
+{%- set _parts = site_pages | selectattr('part', 'equalto', 'True') | list %}
+{%- set _palette = ['#4c72b0', '#55a868', '#8172b3', '#dd8452', '#da8bc3', '#c44e52', '#937860', '#8c8c8c'] %}
+{%- macro _title(title, n) %}{% set h = title.split('. ', 1) %}{{ h[1] if h | length == 2 and h[0] == n | string else title }}{% endmacro %}
+<div class="part-plan">
+{%- for p in _parts %}
+<a class="part-plan-item" href="{{ pathToRoot }}{{ p.path }}" style="--color-part:{{ p.color or _palette[loop.index0 % _palette | length] }}"><span class="part-plan-num">{{ loop.index }}</span><div><div class="part-plan-title">{{ _title(p.title, loop.index) }}</div>
+{%- if p.summary or p.subtitle %}<div class="part-plan-sub">{{ p.summary or p.subtitle }}</div>{% endif %}</div></a>
+{%- endfor %}
+</div>

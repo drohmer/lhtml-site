@@ -1,0 +1,27 @@
+{#- The slide of a part of the talk: its number, title and subtitle, and the list of the parts,
+    each a link to its slide. A page includes it, {% include 'theme/template/part.html' %}, and
+    the deck lists the page once per part, with `part: true` (docs/reference.md, Parts of a talk):
+
+      - {path: 00_part, title: "1. Introduction", part: true, subtitle: "Context and goals"}
+
+    The parts are the entries of the deck with `part: true` (site_pages, in the order of the
+    deck); the number of a part is its rank among them. Settings of an entry: `title` (a leading
+    "<number>. " is not repeated on the slide), `subtitle`, `color` (else the palette below).
+    Raw HTML only: no LHTML line marker follows a Jinja tag here. -#}
+{%- set _parts = site_pages | selectattr('part', 'equalto', 'True') | list %}
+{%- set _palette = ['#4c72b0', '#55a868', '#8172b3', '#dd8452', '#da8bc3', '#c44e52', '#937860', '#8c8c8c'] %}
+{%- set _at = namespace(n=0) %}
+{%- for p in _parts %}{% if p.path == site_pages[pageID].path %}{% set _at.n = loop.index %}{% endif %}{% endfor %}
+{%- macro _title(title, n) %}{% set h = title.split('. ', 1) %}{{ h[1] if h | length == 2 and h[0] == n | string else title }}{% endmacro %}
+{%- set _p = _parts[_at.n - 1] if _at.n else site_pages[pageID] %}
+<div class="hidden"><h1>{{ _p.title }}</h1></div>
+<div class="part" style="--color-part:{{ _p.color or _palette[(_at.n - 1) % _palette | length] }}">
+<div class="part-head">
+{%- if _at.n %}<div class="part-num">{{ _at.n }}</div>{% endif %}
+<div class="part-title">{{ _title(_p.title, _at.n) }}</div>
+{%- if _p.subtitle %}<div class="part-sub">{{ _p.subtitle }}</div>{% endif %}
+</div>
+<ol class="part-toc">
+{%- for p in _parts %}<li class="{{ 'on' if loop.index == _at.n }}" style="--color-part:{{ p.color or _palette[loop.index0 % _palette | length] }}"><a href="{{ pathToRoot }}{{ p.path }}"><span>{{ loop.index }}</span>{{ _title(p.title, loop.index) }}</a></li>{% endfor -%}
+</ol>
+</div>

@@ -34,6 +34,7 @@ tokens:
     warn-bg: '#fff3cd'
     warn-border: '#e0a800'
     key-border: red     # emphasis frame (the class border of classes.css)
+    part: '#8c8c8c'     # a part of the talk without its color (template/part.html: --color-part, set by each part)
   aside:
     top: 150px          # figure in the right column: top 100-250 px (40 %)
     right: 100px        # right edge at x = 1820 (median of the corpus: 1800)
@@ -173,6 +174,39 @@ macros:
     css: |
       .section { text-align: center; margin-top: var(--section-top); margin-bottom: var(--section-bottom);
                  font-size: var(--font-section); line-height: var(--line-section); }
+
+  part:
+    class: part
+    doc: |
+      Slide of a part of the talk, and plan: not written by hand. A page includes
+      `{% include 'theme/template/part.html' %}` (the slide of a part: number, title, subtitle,
+      list of the parts) or `{% include 'theme/template/plan.html' %}` (one card per part); the
+      deck lists the page of a part once per part with `part: true`, `subtitle`, `color`
+      (`summary`: the text of its card in the plan). Classes: .part, .part-head, .part-num,
+      .part-title, .part-sub, .part-toc (li.on: the current part), .part-plan, .part-plan-item,
+      .part-plan-num, .part-plan-title, .part-plan-sub; --color-part, the color of the part, is set on each.
+    css: |
+      body:has(.part) h1 { display: none; }
+      .part { display: grid; grid-template-columns: 1fr 560px; gap: 60px; align-items: center; height: 820px; text-align: left; }
+      .part .part-num { width: 130px; height: 130px; border-radius: 50%; background: var(--color-part); color: white; font-size: 220%; font-weight: bold;
+                        display: flex; align-items: center; justify-content: center; margin-bottom: 30px; }
+      .part .part-title { font-size: 170%; color: #262626; line-height: 1.15em; padding-bottom: 18px; border-bottom: 8px solid var(--color-part); display: inline-block; }
+      .part .part-sub { font-size: 88%; color: #444; margin-top: 22px; font-style: italic; }
+      .part-toc { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
+      .part-toc li { display: flex; align-items: center; gap: 18px; font-size: 76%; color: #8a8a8a; padding: 10px 16px; border: 2px solid #d0d0d0; background: #f6f6f6; }
+      .part-toc li span { width: 46px; height: 46px; border-radius: 50%; background: #c8c8c8; color: white; font-weight: bold;
+                          display: flex; align-items: center; justify-content: center; flex: none; }
+      .part-toc li.on { color: white; background: var(--color-part); border-color: var(--color-part); font-weight: bold; }
+      .part-toc li a { display: flex; align-items: center; gap: 18px; color: inherit; text-decoration: none; width: 100%; }
+      .part-toc li:not(.on):hover { background: #ececec; }
+      .part-toc li.on span { background: white; color: var(--color-part); }
+      .part-plan { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 50px; margin-top: 40px; text-align: left; }
+      .part-plan-item { display: flex; gap: 24px; align-items: center; padding: 14px 24px; text-decoration: none; color: inherit;
+                        background: #f6f6f6; border: 2px solid #d0d0d0; border-left: 12px solid var(--color-part); }
+      .part-plan-item:hover { background: #ececec; }
+      .part-plan-num { font-size: 180%; font-weight: bold; color: var(--color-part); min-width: 1.2em; text-align: center; }
+      .part-plan-title { font-size: 100%; font-weight: bold; color: #111; }
+      .part-plan-sub { font-size: 74%; color: #444; margin-top: 4px; }
 
   media:
     class: media

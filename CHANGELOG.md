@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- The slides themes give the slide of a part of a talk and the plan:
+  `theme/template/part.html` and `theme/template/plan.html`, included by a
+  page. The deck lists the page of a part once per part with `part: true`,
+  `subtitle`, `color`, `summary` (declared in `toc: keys:` of the themes, so
+  that they reach `site_pages`); the number of a part, the list of the parts
+  with the current one marked, the links to their slides (`index-2.html`...)
+  and the cards of the plan follow the deck. Style: the macro `part` of the
+  design, color `--color-part` (docs/reference.md, Parts of a talk).
 - The slides theme changes the slide with Page Down / Page Up too, the keys
   that the remote controls of presentations send.
 - A demo in a slide (`demo::`, or any iframe) no longer keeps the keys of the
