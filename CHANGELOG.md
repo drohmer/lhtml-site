@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- The links between the slides are internal links of the exported PDF:
+  Chrome writes them as file:// URIs of the site being exported, which no
+  reader of the PDF has; the merge (`pdf_export.merge_pypdf`) makes each a
+  link to the first page of its slide, repeated slides (`index-2.html`) and
+  directories included. The other links are kept.
+- A formula `\(...\)` or `\[...\]` that holds `{#` (a LaTeX color,
+  `\textcolor{#1f77b4}{x}`) no longer opens a Jinja comment: the build writes
+  it between `{% raw %}` and `{% endraw %}` before Jinja, in the copy of the
+  page (`lhtml_site/math_raw.py`); pages no longer need a `{% raw %}` around
+  their content. A formula already in a raw block is left as it is.
 - The slides themes give the slide of a part of a talk and the plan:
   `theme/template/part.html` and `theme/template/plan.html`, included by a
   page. The deck lists the page of a part once per part with `part: true`,
@@ -45,6 +55,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   the color of a link, when it has none.
 
 ### Fixed
+- Two figures in code of one directory (`a.svg.py`, `b.svg.py`) no longer
+  share their cache entry: the key hashed the files of the directory but not
+  the name of the script, so the second figure was a copy of the first one
+  (`lhtml_site/figures.py`).
 - The `docs` theme: a link to the other language of the site
   (`icon-btn lang-switch` in the top bar) stays visible on phones, where
   the repository link is hidden.

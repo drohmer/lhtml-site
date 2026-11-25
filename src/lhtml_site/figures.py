@@ -98,12 +98,18 @@ def build_figures(directories, cache_directory):
 
 
 def figure_key(script, figure):
-    """Conservative cache key: scripts and adjacent data, including additions.
+    """Conservative cache key: the script itself, then the scripts and adjacent
+    data of its directory, including additions.
 
-    Generated targets are excluded to avoid self-invalidating the cache. Files
-    read outside this directory require an explicit rebuild (not inferred).
+    The name of the script comes first: two scripts of one directory share the
+    files they hash, and would otherwise share their cache entry (the second
+    figure a copy of the first one). Generated targets are excluded to avoid
+    self-invalidating the cache. Files read outside this directory require an
+    explicit rebuild (not inferred).
     """
     digest = hashlib.sha256()
+    digest.update(script.name.encode())
+    digest.update(b'\0')
     outputs = {output.resolve() for _, output in figure_sources(script.parent)}
     from lhtml_site.dependencies import scope_files
     for path in scope_files(script.parent, 'engine'):

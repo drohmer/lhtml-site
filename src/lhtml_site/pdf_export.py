@@ -136,7 +136,8 @@ def export(meta):
                     raise RuntimeError(f'{"PDF" if file.endswith(".pdf") else "Image"} not generated: {file}')
 
         merged = os.path.join(staging, name + '.pdf')
-        merge_pypdf([stem + '.pdf' for stem in stems], merged)
+        internal = merge_pypdf([stem + '.pdf' for stem in stems], merged, inputs)
+        meta['log'].detail(f'{internal} link(s) between the pages made internal to the PDF')
         if not os.path.isfile(merged):
             raise RuntimeError('Merged PDF not generated')
 
@@ -218,10 +219,55 @@ async def _export_playwright(inputs, stems, chrome_path, done=lambda: None):
             raise failed
 
 
-def merge_pypdf(pdfs, merged):
+def merge_pypdf(pdfs, merged, sources=()):
+    """Merge the PDFs of the pages into one. `sources`: the HTML file each PDF was
+    printed from; a link of a page to one of them (Chrome writes it as a file://
+    URI of the site being exported, which no reader of the PDF has) becomes a
+    link inside the PDF, to the first page of that PDF. Returns the number of
+    links made internal."""
     from pypdf import PdfWriter
     writer = PdfWriter()
+    first = []
     for pdf in pdfs:
+        first.append(len(writer.pages))
         writer.append(pdf)
+    targets = {_local_file(Path(source).resolve().as_uri()): first[i] for i, source in enumerate(sources)}
+    internal = _internal_links(writer, targets) if targets else 0
     with open(merged, 'wb') as fid:
         writer.write(fid)
+    return internal
+
+
+def _local_file(uri):
+    """The file a file:// URI names, without its #fragment or ?query (a directory:
+    its index.html); None for another URI."""
+    from urllib.parse import urlsplit
+    from urllib.request import url2pathname
+    parts = urlsplit(uri)
+    if parts.scheme != 'file':
+        return None
+    path = Path(url2pathname(parts.path))
+    if parts.path.endswith('/') or path.is_dir():
+        path = path / 'index.html'
+    return str(path.resolve())
+
+
+def _internal_links(writer, targets):
+    """Replace the URI actions of the links to one of `targets` (file -> page
+    number) with a destination in the document; the other links are kept."""
+    from pypdf.generic import ArrayObject, NameObject
+    count = 0
+    for page in writer.pages:
+        for annotation in page.get('/Annots') or ():
+            annotation = annotation.get_object()
+            action = annotation.get('/A')
+            if not action or action.get('/S') != '/URI':
+                continue
+            target = targets.get(_local_file(str(action.get('/URI'))))
+            if target is None:
+                continue
+            del annotation[NameObject('/A')]
+            annotation[NameObject('/Dest')] = ArrayObject([writer.pages[target].indirect_reference,
+                                                           NameObject('/Fit')])
+            count += 1
+    return count

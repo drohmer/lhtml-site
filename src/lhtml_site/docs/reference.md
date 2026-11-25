@@ -757,6 +757,16 @@ katex:
 
 `lhtml-site doctor` says whether `quickjs` is found.
 
+**Formulas and Jinja.** The page is a Jinja template, in which `{#` opens a
+comment: a formula `\(...\)` or `\[...\]` that holds one, as a LaTeX color
+`\textcolor{#1f77b4}{x}` does, is written between `{% raw %}` and
+`{% endraw %}` by the build before Jinja (in the copy of the page in the
+site, not in its source), so no `{% raw %}` is needed around the page. A
+formula already in a `{% raw %}` block is left as it is. The other formulas
+stay Jinja: `\( n = {{ params.n }} \)` writes the value, and a LaTeX group
+`{{` is written `{ {`. `$$...$$` is not protected: write a color there in a
+`{% raw %}` block.
+
 ## PDF export
 
 The theme `slides-pdf` (a theme that declares `export: pdf`) writes
@@ -783,6 +793,11 @@ the promises a page or a demo, in an iframe too, registered with
 ready within a minute fails the build. A bar shows the progress on a
 terminal. The configuration key `chrome` names another Chromium or Chrome
 to run instead.
+
+The links between the slides stay links in the PDF: a link to another page
+of the deck (`pathTo_...`, the plan of `theme/template/plan.html`, an
+occurrence `index-2.html`) goes to its page in the document; the other links
+(web pages, files outside the deck) are kept as they are.
 
 ## Videos
 

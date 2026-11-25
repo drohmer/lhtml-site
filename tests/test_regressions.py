@@ -274,8 +274,9 @@ for (const [headings, expected] of [
             for stem in stems:
                 Path(stem + '.pdf').write_bytes(b'page')
                 Path(stem + '.jpg').write_bytes(b'export')
-        def merge(pdfs, merged):
+        def merge(pdfs, merged, sources=()):
             Path(merged).write_bytes(b'export')
+            return 0
         meta = {'site_directory': str(self.site), 'debug': False, 'log': Logger(),
                 'structure': [{'dir': '', 'filename': 'index.html'}]}
         with patch.object(pdf_export, 'export_playwright', side_effect=browser), \

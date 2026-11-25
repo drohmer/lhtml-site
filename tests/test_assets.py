@@ -148,3 +148,21 @@ def test_figure_cache_invalidated_by_adjacent_data(tmp_path):
     (folder / 'data.txt').write_text('second')
     assert figures.build_figures([folder], cache)[:2] == (1, 0)
     assert (folder / 'plot.svg').read_text() == 'second'
+
+
+def test_two_figures_of_one_directory_keep_their_own_output(tmp_path):
+    """Two scripts next to each other share their directory, not their cache entry:
+    the second figure is never the copy of the first one."""
+    from lhtml_site import figures
+    folder = tmp_path / 'assets'
+    folder.mkdir()
+    for name in ('a', 'b'):
+        (folder / f'{name}.svg.py').write_text(
+            f'import sys\nfrom pathlib import Path\nPath(sys.argv[1]).write_text("{name}")\n')
+    cache = tmp_path / '.cache'
+    assert figures.build_figures([folder], cache)[:2] == (2, 0)
+    assert [(folder / f'{n}.svg').read_text() for n in 'ab'] == ['a', 'b']
+    for n in 'ab':
+        (folder / f'{n}.svg').unlink()
+    assert figures.build_figures([folder], cache)[:2] == (0, 2)
+    assert [(folder / f'{n}.svg').read_text() for n in 'ab'] == ['a', 'b']

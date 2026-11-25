@@ -33,6 +33,7 @@ from lhtml_site import source_scan
 from lhtml_site import theme
 from lhtml_site import menu
 from lhtml_site import headings
+from lhtml_site import math_raw
 from lhtml_site import katex_render
 from lhtml_site import wrap
 from lhtml_site import index_page
@@ -943,6 +944,8 @@ def generate_site(meta, selected, built):
         # Core stages on the sources, after the extensions have written them:
         # the theme wraps what the content ends up being (lhtml_site/wrap.py), and the
         # headings of that content get their ids (lhtml_site/headings.py).
+        # Formulas holding {# (LaTeX colors) kept from Jinja (lhtml_site/math_raw.py)
+        math_raw.run(meta)
         headings.run(meta)
         wrap.run(meta)
         # Transcoded videos next to the assets, before LHTML writes the <video>

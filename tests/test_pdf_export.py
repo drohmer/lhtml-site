@@ -165,6 +165,37 @@ class MergeTest(unittest.TestCase):
             from pypdf import PdfReader
             self.assertEqual(len(PdfReader(os.path.join(tmp, 'all.pdf')).pages), 6)
 
+    def test_links_between_the_pages_become_internal(self):
+        """Chrome writes a link to another page of the site as a file:// URI of the
+        site being exported; the merge makes it a link to that page of the PDF."""
+        from pypdf import PdfReader, PdfWriter
+        from pypdf.annotations import Link
+        with tempfile.TemporaryDirectory() as tmp:
+            site = Path(tmp) / 'site'
+            sources = [site / 'a/index.html', site / 'b/index.html', site / 'b/index-2.html']
+            for source in sources:
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_text('<html></html>')
+            parts = [os.path.join(tmp, f'{i}.pdf') for i in range(3)]
+            blank_pdf(parts[0], pages=2)          # a page printed on two pages of the PDF
+            blank_pdf(parts[1])
+            blank_pdf(parts[2])
+            links = [sources[2].as_uri() + '#part', (site / 'b').as_uri() + '/',   # an occurrence, a directory
+                     'https://example.org/b/index.html', (Path(tmp) / 'elsewhere.html').as_uri()]
+            writer = PdfWriter(clone_from=parts[0])
+            for i, url in enumerate(links):
+                writer.add_annotation(0, Link(rect=(10, 10 + 30 * i, 100, 30 + 30 * i), url=url))
+            with open(parts[0], 'wb') as fid:
+                writer.write(fid)
+            merged = os.path.join(tmp, 'all.pdf')
+            self.assertEqual(pdf_export.merge_pypdf(parts, merged, sources), 2)
+            reader = PdfReader(merged)
+            annotations = [a.get_object() for a in reader.pages[0]['/Annots']]
+            pages = [p.indirect_reference for p in reader.pages]
+            dests = [pages.index(a['/Dest'][0]) if '/Dest' in a else a['/A']['/URI'] for a in annotations]
+            # first page of each target PDF (a: pages 0-1, b: 2, b/index-2: 3); other URIs kept
+            self.assertEqual(dests, [3, 2, links[2], links[3]])
+
 
 @pytest.mark.skipif(os.environ.get('LHTML_BROWSER_TEST') != '1', reason='Set LHTML_BROWSER_TEST=1 for Chromium')
 def test_the_slides_starter_exports_with_playwright(tmp_path):
